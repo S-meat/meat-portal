@@ -79,12 +79,12 @@
     var urgent = countUrgent(plan.today);
     var leaders = (p.leaders || []).map(function (l) { return esc(l.role) + ' <b>' + esc(l.name) + '</b>'; }).join('<br>');
     return '<div class="hero">' +
-      '<div class="room"><div class="lbl">内臓作業室</div>' +
-      '<div class="big">' + v(n.packs) + '<small>パック</small></div>' +
-      '<div class="kv">入荷 <b>' + v(n.heads, '頭') + '</b>　終了予定 <b>' + v(n.endPlan) + '</b><br>責任者 <b>' + v(n.leader) + '</b></div></div>' +
       '<div class="room"><div class="lbl">精肉パック作業室</div>' +
       '<div class="big">' + v(p.packs) + '<small>パック</small></div>' +
       '<div class="kv">出勤 <b>' + v(p.attendance, '名') + '</b>　終了予定 <b>' + v(p.endPlan) + '</b>' + (leaders ? '<br>' + leaders : '') + '</div></div>' +
+      '<div class="room"><div class="lbl">内臓作業室</div>' +
+      '<div class="big">' + v(n.packs) + '<small>パック</small></div>' +
+      '<div class="kv">入荷 <b>' + v(n.heads, '頭') + '</b>　終了予定 <b>' + v(n.endPlan) + '</b><br>責任者 <b>' + v(n.leader) + '</b></div></div>' +
       '<div class="flag">' +
       (todayItems ? '<span class="pill red">当日分あり ' + todayItems + '品目</span>' : '<span class="pill gray">当日分なし</span>') +
       (urgent ? '<span class="pill red">急ぎ ' + urgent + '</span>' : '') +
@@ -119,7 +119,7 @@
     var body = '';
     if (me) {
       var blocks = [];
-      [['内臓作業室', plan.naizo], ['精肉パック作業室', plan.pack]].forEach(function (pair) {
+      [['精肉パック作業室', plan.pack], ['内臓作業室', plan.naizo]].forEach(function (pair) {
         var room = pair[1];
         if (!room || !room.staff) return;
         var s = room.staff.filter(function (x) { return x.name === me; })[0];
@@ -231,11 +231,11 @@
   }
 
   // ---------- 本体 ----------
-  var SECTIONS = [['naizo', '内臓作業室'], ['pack', '精肉パック'], ['today', '当日分'], ['next', '翌日分']];
+  var SECTIONS = [['pack', '精肉パック'], ['naizo', '内臓作業室'], ['today', '当日分'], ['next', '翌日分']];
 
   function render(el, plan, opt) {
     opt = opt || {};
-    var state = { sec: opt.section || 'naizo', me: opt.me || '', zero: false };
+    var state = { sec: opt.section || 'pack', me: opt.me || '', zero: false };
 
     function draw() {
       var body;
