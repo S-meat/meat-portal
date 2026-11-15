@@ -57,7 +57,9 @@ kbd{font-family:inherit;font-size:13px;border:1px solid #ccc;border-bottom-width
   .head{position:static}
   .head .btn,.toc{display:none}
   body{background:#fff}
-  section,.hero{break-inside:avoid-page}
-  .shot{max-height:120mm;width:auto}
+  .hero,.point,.qr,.box,table,tr{break-inside:avoid-page}
+  h2,h3{break-after:avoid-page}
+  .shot{max-height:95mm;width:auto;break-inside:avoid-page}
+  section{padding:12px 14px;margin-bottom:10px}
   .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
