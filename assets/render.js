@@ -266,7 +266,7 @@
   // ---------- 本日の共有 ----------
   function renderShare(el, share) {
     var groups = share.groups || [];
-    var html = '<div class="share-intro">Slack「本日の共有」の投稿を、要点だけ読みやすく整理しています。</div>';
+    var html = '<div id="shureiBox"></div><div class="share-intro">Slack「本日の共有」の投稿を、要点だけ読みやすく整理しています。</div>';
     if (!groups.length) html += '<div class="card"><div class="empty">共有する投稿はありません</div></div>';
     groups.forEach(function (g) {
       html += '<div class="card share-group"><div class="g-head"><h3>' + esc(g.channel.replace(/^\d+-/, '')) + '</h3><span class="sum">' + g.posts.length + '件</span></div>';
@@ -279,7 +279,11 @@
               return '<li>' + (m && m[1].length <= 20 ? '<b>' + esc(m[1]) + '</b>：' + esc(m[2]) : esc(l)) + '</li>';
             }).join('') + '</ul>';
         });
-        if (!body) body = '<div class="muted">資料（PDFなど）の共有です。くわしくはSlackで確認してください。</div>';
+        var pdfs = p.pdfs || [];
+        if (!body) body = pdfs.length ? '<div class="muted">資料（PDF）の共有です。</div>' : '<div class="muted">資料の共有です。くわしくはSlackで確認してください。</div>';
+        if (pdfs.length) body += '<div class="pdf-btns">' + pdfs.map(function (f, i) {
+          return '<button class="pdf-btn" data-pdf="' + esc(f.id) + '" data-title="' + esc(g.channel.replace(/^\d+-/, '') + ' ' + p.date + (pdfs.length > 1 ? '（' + (i + 1) + '）' : '')) + '">資料を見る' + (pdfs.length > 1 ? ' ' + (i + 1) : '') + '</button>';
+        }).join('') + '</div>';
         html += '<div class="sh-post' + (idx ? ' sep' : '') + '"><div class="sh-meta">' + esc(p.date) + ' ' + esc(p.time) + '　' + esc(p.author) +
           (p.link ? '<a class="sh-link" href="' + esc(p.link) + '" target="_blank" rel="noopener">Slackで見る</a>' : '') + '</div>' +
           '<div class="sh-body">' + body + '</div></div>';
@@ -299,5 +303,16 @@
     });
   }
 
-  root.PlanView = { render: render, renderShare: renderShare, jpDate: jpDate, relDay: relDay, esc: esc };
+  function renderNotes(el, notes) {
+    if (!notes || !notes.length) { el.innerHTML = ''; return; }
+    var n = notes[0];
+    var more = notes.slice(1, 4).map(function (x) {
+      return '<button class="pdf-link" data-pdf="' + esc(x.pdfs[0].id) + '" data-title="終礼ノート ' + esc(x.date) + '">' + esc(x.date) + ' ' + esc(x.time) + '</button>';
+    }).join('');
+    el.innerHTML = '<div class="card shurei"><div class="shurei-top"><div><span class="num">PDF</span><b>終礼ノート</b><small>' + esc(n.date) + ' ' + esc(n.time) + ' に共有</small></div>' +
+      '<button class="btn pdf-btn" data-pdf="' + esc(n.pdfs[0].id) + '" data-title="終礼ノート ' + esc(n.date) + '">開く</button></div>' +
+      (more ? '<div class="shurei-more"><span>前の終礼ノート：</span>' + more + '</div>' : '') + '</div>';
+  }
+
+  root.PlanView = { render: render, renderShare: renderShare, renderNotes: renderNotes, jpDate: jpDate, relDay: relDay, esc: esc };
 })(window);
