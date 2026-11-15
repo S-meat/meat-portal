@@ -10,7 +10,7 @@
  *   SLACK_DAY_OFFSET  … 6:50の投稿で何日後の予定を出すか（0=当日 / 1=翌日、未設定は0）
  *   VIEW_KEY          … 閲覧用の合言葉（アプリを開くときに入力。未設定なら合言葉なしで開ける）
  *   SHARE_CHANNEL     … 「本日の共有」まとめが投稿されるチャンネル（未設定は #110 = C05G46NECKV）
- *   PDF_CHANNELS      … PDFを表示してよいチャンネルID（カンマ区切り。未設定は #110,#201,#104,#601）
+ *   PDF_CHANNELS      … PDFを表示してよいチャンネルID（カンマ区切り。未設定は #110 終礼ノートのみ）
  *
  * 【デプロイ】ウェブアプリ / 実行ユーザー：自分 / アクセス：全員
  * ※ ES5 で記述（var・for ループのみ）
@@ -599,7 +599,7 @@ function testBuildShare() {
 //   ・Slackのファイルを取り出してアプリへ渡す（合言葉が必要。Driveには置かない）
 //   ・決められたチャンネルのPDFだけ
 // ============================================================
-var DEFAULT_PDF_CHANNELS = ['C05G46NECKV', 'C03LVUDEQLA', 'C052Z27LEA3', 'C0BFRGAQJ03'];
+var DEFAULT_PDF_CHANNELS = ['C05G46NECKV']; // 終礼ノート（#110）だけ。取引先などの資料は出さない
 var PDF_MAX_BYTES = 15 * 1024 * 1024;
 
 function pdfIds_(files) {

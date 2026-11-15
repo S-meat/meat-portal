@@ -279,11 +279,10 @@
               return '<li>' + (m && m[1].length <= 20 ? '<b>' + esc(m[1]) + '</b>：' + esc(m[2]) : esc(l)) + '</li>';
             }).join('') + '</ul>';
         });
-        var pdfs = p.pdfs || [];
-        if (!body) body = pdfs.length ? '<div class="muted">資料（PDF）の共有です。</div>' : '<div class="muted">資料の共有です。くわしくはSlackで確認してください。</div>';
-        if (pdfs.length) body += pdfs.map(function (f, i) {
-          return '<div class="pdf-inline" data-pdf="' + esc(f.id) + '" data-title="' + esc(g.channel.replace(/^\d+-/, '') + ' ' + p.date + (pdfs.length > 1 ? '（' + (i + 1) + '）' : '')) + '"><div class="pdf-ph">資料を読み込み中…</div></div>';
-        }).join('');
+        // PDFは終礼ノートだけ（一番上のカードに表示）。取引先などの資料は表示しない
+        var isShurei = /終礼ノート/.test(g.channel) && (p.pdfs || []).length;
+        if (isShurei) body += '<div class="pdf-note">↑ 終礼ノートは一番上に表示しています</div>';
+        else if (!body) body = '<div class="muted">資料の共有です。くわしくはSlackで確認してください。</div>';
         html += '<div class="sh-post' + (idx ? ' sep' : '') + '"><div class="sh-meta">' + esc(p.date) + ' ' + esc(p.time) + '　' + esc(p.author) +
           (p.link ? '<a class="sh-link" href="' + esc(p.link) + '" target="_blank" rel="noopener">Slackで見る</a>' : '') + '</div>' +
           '<div class="sh-body">' + body + '</div></div>';

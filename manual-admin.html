@@ -147,7 +147,7 @@
       <li>毎朝6:50にSlack #110 に出る「本日の共有」をもとに、元の投稿を読んで要点を整理し、アプリの「本日の共有」タブに表示します（7時台に自動で作成。7時前に開いた人がいれば、その時点で作成）。</li>
       <li>特注は「【○/○作業】」の見出しと「取引先様　品目×数」の形を読み取って、作業日ごとに整理します。投稿するときはこの形を崩さないでください。</li>
       <li>AIは使っていません。PDFのファイル名は表示しません。</li>
-      <li>終礼ノートなどのPDFは、アプリの中でそのまま表示できます（Slackからその都度取り出して表示。Googleドライブなどには保存しません）。表示できるのは #110・#201・#104・#601 のPDFだけです。</li>
+      <li>終礼ノートなどのPDFは、アプリの中でそのまま表示できます（Slackからその都度取り出して表示。Googleドライブなどには保存しません）。表示するのは #110 の終礼ノートだけです（取引先などの資料PDFは表示しません）。</li>
     </ul>
     <img class="shot phone" src="assets/manual/m-share-card.png" alt="本日の共有の表示例" loading="lazy">
     <h3>合言葉（閲覧の制限）</h3>
@@ -176,7 +176,7 @@
       <tr><td>共有アプリ</td><td>https://s-meat.github.io/meat-portal/（GitHub：S-meat/meat-portal）</td></tr>
       <tr><td>データの保存・配信</td><td>Apps Script「ミートチームポータル（作業予定API）」／保存先スプレッドシート「ミートチーム 作業予定データ（ポータル用）」</td></tr>
       <tr><td>合言葉の変更</td><td>Apps Script → プロジェクトの設定 → スクリプト プロパティ → <code>VIEW_KEY</code>（未設定にすると合言葉なしで開ける）</td></tr>
-      <tr><td>本日の共有</td><td>スクリプト プロパティ <code>SLACK_BOT_TOKEN</code>（まとめBotと同じトークン）が必要。7時台のトリガー <code>buildTodayShare</code> で作成。動作確認はエディタで <code>testBuildShare</code> を実行。PDF表示にはSlackアプリに <code>files:read</code> 権限が必要（確認は <code>testShureiPdf</code>）</td></tr>
+      <tr><td>本日の共有</td><td>スクリプト プロパティ <code>SLACK_BOT_TOKEN</code>（まとめBotと同じトークン）が必要。7時台のトリガー <code>buildTodayShare</code> で作成。動作確認はエディタで <code>testBuildShare</code> を実行。終礼ノートのPDF表示にはSlackアプリに <code>files:read</code> 権限が必要（確認は <code>testShureiPdf</code>）</td></tr>
       <tr><td>暗証番号の変更</td><td>Apps Script → プロジェクトの設定 → スクリプト プロパティ → <code>UPLOAD_PIN</code> を書き換えて保存（再デプロイ不要）</td></tr>
       <tr><td>タブのリンク先の変更</td><td>リポジトリの <code>assets/config.js</code> の <code>LINKS</code></td></tr>
       <tr><td>Slack #110（6:50）</td><td>Apps Script の <code>?action=slack</code> でまとめ用の文面を返します。既存のまとめBotへの組み込み、または <code>SLACK_BOT_TOKEN</code> 設定＋<code>setupTriggers</code> 実行で単独投稿（README参照）</td></tr>
