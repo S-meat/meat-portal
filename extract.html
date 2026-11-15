@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f2">
+<title>作業指示書の取り込み｜ミートチーム</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="app-head">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#111"/><path d="M8 22V10h3l5 7 5-7h3v12h-3v-7l-5 6.5-5-6.5v7z" fill="#fff"/></svg>
+    <div><small>SAIBOKU 製造部</small><b>作業指示書の取り込み</b></div>
+    <span class="spacer"></span>
+    <a class="pill line" href="index.html#plan" style="text-decoration:none">共有アプリへ</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="rules">
+    <div><i>01</i><b>指示書を選ぶ</b>作業指示書（.xlsx）を選ぶかドラッグ。「内臓作業室」「精肉パック作業室」「当日分まとめ」「翌日分まとめ」を読み取ります。</div>
+    <div><i>02</i><b>内容を確認</b>下にプレビューが出ます。メンバーが見る画面と同じです。</div>
+    <div><i>03</i><b>共有する</b>暗証番号を入れて共有。同じ日付を取り込み直すと上書きされます。</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">01</span>作業指示書を選ぶ</h2>
+    <label class="drop" id="drop">
+      <b>ここにファイルをドロップ</b>
+      <span class="muted">またはタップして選択（.xlsx / .xlsm）</span>
+      <input type="file" id="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+    </label>
+    <div id="parseMsg"></div>
+  </div>
+
+  <div class="card" id="shareCard" hidden>
+    <h2><span class="num">02</span>共有する</h2>
+    <div id="summary" class="muted"></div>
+    <div class="field" id="pinRow">
+      <input type="password" id="pin" inputmode="numeric" autocomplete="off" placeholder="暗証番号">
+    </div>
+    <button class="btn block" id="share">この内容で共有する</button>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn sub" id="dl" style="flex:1">JSONを保存</button>
+    </div>
+    <div id="shareMsg"></div>
+  </div>
+
+  <div id="preview"></div>
+</div>
+
+<!-- GAS への送信（hidden form + iframe：CORS 回避） -->
+<iframe name="gasFrame" id="gasFrame" hidden></iframe>
+<form id="gasForm" method="post" target="gasFrame" hidden>
+  <input type="hidden" name="pin">
+  <input type="hidden" name="payload">
+</form>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/parser.js"></script>
+<script src="assets/render.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CFG = window.PORTAL_CONFIG || {};
+  var plan = null;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = PlanView.esc;
+  function msg(el, cls, html) { $(el).innerHTML = html ? '<div class="msg ' + cls + '">' + html + '</div>' : ''; }
+  var store = {
+    get: function (k) { try { return localStorage.getItem('meatPortal.' + k) || ''; } catch (e) { return ''; } },
+    set: function (k, v) { try { localStorage.setItem('meatPortal.' + k, v); } catch (e) {} }
+  };
+  $('pin').value = store.get('pin');
+
+  if (!CFG.GAS_URL) {
+    $('pinRow').hidden = true;
+    $('share').disabled = true;
+    $('share').textContent = 'GAS未設定のため共有できません（JSON保存のみ）';
+  }
+
+  // ---------- ファイル読み込み ----------
+  var drop = $('drop');
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function (e) { if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); });
+  $('file').addEventListener('change', function (e) { if (e.target.files[0]) handle(e.target.files[0]); e.target.value = ''; });
+
+  function handle(file) {
+    msg('parseMsg', '', '');
+    msg('shareMsg', '', '');
+    if (typeof XLSX === 'undefined') { msg('parseMsg', 'err', '読み取りライブラリを読み込めませんでした。ネット接続を確認してください。'); return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        plan = PlanParser.parseWorkbook(XLSX, new Uint8Array(reader.result), file.name);
+        showPreview(file.name);
+      } catch (err) {
+        plan = null;
+        $('shareCard').hidden = true;
+        $('preview').innerHTML = '';
+        msg('parseMsg', 'err', '読み取れませんでした：' + esc(err.message));
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function showPreview(name) {
+    var n = plan.naizo, p = plan.pack;
+    msg('parseMsg', 'ok', '<b>' + esc(name) + '</b> を読み取りました');
+    $('summary').innerHTML = '作業日 <b style="color:var(--ink);font-size:16px">' + PlanView.jpDate(plan.date) + '</b>' +
+      '　内臓 ' + n.staff.length + '名・商品 ' + n.products.length + '件　精肉パック ' + p.staff.length + '名' +
+      '　当日分 ' + plan.today.total + '　翌日分 ' + plan.next.total;
+    $('shareCard').hidden = false;
+    PlanView.render($('preview'), plan, {});
+  }
+
+  // ---------- 共有 ----------
+  var waiting = null;
+  window.addEventListener('message', function (e) {
+    var d = e.data && e.data.meatPortal;
+    if (!d || !waiting) return;
+    finish(d);
+  });
+
+  function finish(d) {
+    if (!waiting) return;
+    clearTimeout(waiting.timer);
+    waiting = null;
+    $('share').disabled = false;
+    $('share').textContent = 'この内容で共有する';
+    if (d.ok) {
+      store.set('pin', $('pin').value);
+      msg('shareMsg', 'ok', PlanView.jpDate(d.date) + ' の作業予定を共有しました。<a href="index.html#plan">共有アプリで見る</a>');
+    } else {
+      msg('shareMsg', 'err', '共有できませんでした：' + esc(d.error || ''));
+    }
+  }
+
+  // postMessage が届かない環境向け：一覧に日付が入ったかで確認
+  function verifyByList(date, startedAt) {
+    var cb = 'mp_v_' + Date.now();
+    var s = document.createElement('script');
+    window[cb] = function (res) {
+      delete window[cb]; s.remove();
+      var hit = (res.dates || []).filter(function (x) { return x.date === date && new Date(x.updatedAt).getTime() >= startedAt - 60000; })[0];
+      finish(hit ? { ok: true, date: date } : { ok: false, error: '保存を確認できませんでした。暗証番号を確認してもう一度お試しください。' });
+    };
+    s.onerror = function () { finish({ ok: false, error: '通信エラー' }); };
+    s.src = CFG.GAS_URL + '?action=list&callback=' + cb + '&_=' + Date.now();
+    document.body.appendChild(s);
+  }
+
+  $('share').onclick = function () {
+    if (!plan || !CFG.GAS_URL) return;
+    var pin = $('pin').value.trim();
+    if (!pin) { msg('shareMsg', 'err', '暗証番号を入れてください'); return; }
+    var f = $('gasForm');
+    f.action = CFG.GAS_URL;
+    f.pin.value = pin;
+    f.payload.value = JSON.stringify(plan);
+    var startedAt = Date.now();
+    $('share').disabled = true;
+    $('share').textContent = '送信中…';
+    msg('shareMsg', '', '');
+    waiting = { timer: setTimeout(function () { verifyByList(plan.date, startedAt); }, 8000) };
+    f.submit();
+  };
+
+  $('dl').onclick = function () {
+    if (!plan) return;
+    var blob = new Blob([JSON.stringify(plan, null, 1)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'plan-' + plan.date + '.json';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  };
+})();
+</script>
+</body>
+</html>
