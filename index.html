@@ -25,6 +25,7 @@
   </div>
   <nav class="seg" role="tablist" id="tabs">
     <button role="tab" data-tab="plan"><span class="long">明日の作業予定</span><span class="short">明日の予定</span></button>
+    <button role="tab" data-tab="share"><span class="long">本日の共有</span><span class="short">本日の共有</span></button>
     <button role="tab" data-tab="kaizen">現場改善</button>
     <button role="tab" data-tab="shift">シフト変更</button>
     <button role="tab" data-tab="kyuka">希望休</button>
@@ -46,6 +47,18 @@
   </div>
 </main>
 
+<!-- 本日の共有（#110 6:50 のまとめ） -->
+<main class="view" id="view-share">
+  <div class="wrap">
+    <div class="datebar">
+      <button class="icon-btn" id="sprev" aria-label="前の日">‹</button>
+      <div class="d" id="slabel"></div>
+      <button class="icon-btn" id="snext" aria-label="次の日">›</button>
+    </div>
+    <div id="shareBody"><div class="state"><div class="spinner"></div>読み込み中…</div></div>
+  </div>
+</main>
+
 <!-- 既存アプリ（iframe） -->
 <section class="frame-view" id="view-kaizen" data-link="kaizen" data-title="現場改善フォーム"></section>
 <section class="frame-view" id="view-shift" data-link="shift" data-title="シフト変更申請"></section>
@@ -57,7 +70,8 @@
 (function () {
   'use strict';
   var CFG = window.PORTAL_CONFIG || {};
-  var TABS = ['plan', 'kaizen', 'shift', 'kyuka'];
+  var TABS = ['plan', 'share', 'kaizen', 'shift', 'kyuka'];
+  var PAGE_TABS = { plan: 1, share: 1 };
   var store = {
     get: function (k) { try { return localStorage.getItem('meatPortal.' + k) || ''; } catch (e) { return ''; } },
     set: function (k, v) { try { localStorage.setItem('meatPortal.' + k, v); } catch (e) {} }
@@ -78,8 +92,9 @@
     TABS.forEach(function (t) {
       document.getElementById('view-' + t).classList.toggle('active', t === name);
     });
-    document.body.style.overflow = name === 'plan' ? '' : 'hidden';
-    if (name !== 'plan') loadFrame(document.getElementById('view-' + name));
+    document.body.style.overflow = PAGE_TABS[name] ? '' : 'hidden';
+    if (!PAGE_TABS[name]) loadFrame(document.getElementById('view-' + name));
+    if (name === 'share' && !shareLoaded) loadShare('');
     if (location.hash.slice(1) !== name) history.replaceState(null, '', '#' + name);
     syncHead();
   }
@@ -117,7 +132,7 @@
       function cleanup() { clearTimeout(timer); delete window[cb]; s.remove(); }
       window[cb] = function (data) { cleanup(); resolve(data); };
       s.onerror = function () { cleanup(); reject(new Error('通信エラー')); };
-      s.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'callback=' + cb + '&_=' + Date.now();
+      s.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'key=' + encodeURIComponent(store.get('key')) + '&callback=' + cb + '&_=' + Date.now();
       document.body.appendChild(s);
     });
   }
@@ -156,9 +171,28 @@
     document.getElementById('next').disabled = i < 0 || i >= dates.length - 1;
   }
 
+  // ---------- 合言葉 ----------
+  function showKey(el, message, retry) {
+    el.innerHTML = '<div class="card keycard"><h2><span class="num">KEY</span>合言葉を入力してください</h2>' +
+      '<p class="muted">合言葉は社員に聞いてください。一度入れると、この端末に記憶されます。</p>' +
+      '<div class="field"><input type="password" class="keyinput" autocomplete="off" placeholder="合言葉"><button class="btn keybtn">開く</button></div>' +
+      (message && store.get('key') ? '<div class="msg err">' + PlanView.esc(message) + '</div>' : '') + '</div>';
+    var input = el.querySelector('.keyinput');
+    function go() {
+      var v = input.value.trim(); if (!v) { input.focus(); return; }
+      store.set('key', v);
+      retry();
+      if (el === planEl && shareLoaded) loadShare(shareCurrent);
+      if (el === shareEl) load(current);
+    }
+    el.querySelector('.keybtn').onclick = go;
+    input.onkeydown = function (e) { if (e.key === 'Enter') go(); };
+  }
+
   function load(date) {
     planEl.innerHTML = '<div class="state"><div class="spinner"></div>読み込み中…</div>';
     fetchPlan(date).then(function (res) {
+      if (res.needKey) { document.getElementById('dlabel').innerHTML = '<b>作業予定</b>'; showKey(planEl, res.error, function () { load(date); }); return; }
       if (!res.ok) throw new Error(res.error || '読み込みに失敗しました');
       dates = (res.dates || []).map(function (d) { return d.date; });
       current = res.date || '';
@@ -182,6 +216,47 @@
 
   document.getElementById('prev').onclick = function () { var i = dates.indexOf(current); if (i > 0) load(dates[i - 1]); };
   document.getElementById('next').onclick = function () { var i = dates.indexOf(current); if (i >= 0 && i < dates.length - 1) load(dates[i + 1]); };
+
+  // ---------- 本日の共有 ----------
+  var shareEl = document.getElementById('shareBody');
+  var shareDates = [], shareCurrent = '', shareLoaded = false;
+
+  function setShareLabel(share) {
+    var el = document.getElementById('slabel');
+    if (!shareCurrent) { el.innerHTML = '<b>本日の共有</b>'; return; }
+    var r = PlanView.relDay(shareCurrent);
+    var t = '';
+    if (share && share.postedAt) { var d = new Date(share.postedAt); t = 'Slack #110 ' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2) + ' のまとめ'; }
+    el.innerHTML = '<b>' + PlanView.jpDate(shareCurrent) + '</b><span class="rel' + (r.past ? ' past' : '') + '">' + r.t + '</span>' +
+      '<span class="muted">' + t + '</span>';
+    var i = shareDates.indexOf(shareCurrent);
+    document.getElementById('sprev').disabled = i <= 0;
+    document.getElementById('snext').disabled = i < 0 || i >= shareDates.length - 1;
+  }
+
+  function loadShare(date) {
+    shareLoaded = true;
+    shareEl.innerHTML = '<div class="state"><div class="spinner"></div>読み込み中…</div>';
+    if (!CFG.GAS_URL) { shareEl.innerHTML = '<div class="state"><b>GAS_URL が未設定です</b></div>'; return; }
+    jsonp(CFG.GAS_URL + '?action=share' + (date ? '&date=' + encodeURIComponent(date) : '')).then(function (res) {
+      if (res.needKey) { document.getElementById('slabel').innerHTML = '<b>本日の共有</b>'; showKey(shareEl, res.error, function () { loadShare(date); }); return; }
+      if (!res.ok) throw new Error(res.error || '読み込みに失敗しました');
+      shareDates = res.dates || [];
+      shareCurrent = res.date || '';
+      setShareLabel(res.share);
+      if (!res.share) {
+        shareEl.innerHTML = '<div class="state"><b>まだ共有がありません</b>毎朝6:50のSlack「本日の共有」が出たあとに表示されます。</div>';
+        return;
+      }
+      PlanView.renderShare(shareEl, res.share);
+    }).catch(function (err) {
+      shareEl.innerHTML = '<div class="state"><b>読み込めませんでした</b>' + PlanView.esc(err.message) +
+        '<br><br><button class="btn sub" id="sretry">再読み込み</button></div>';
+      document.getElementById('sretry').onclick = function () { loadShare(shareCurrent); };
+    });
+  }
+  document.getElementById('sprev').onclick = function () { var i = shareDates.indexOf(shareCurrent); if (i > 0) loadShare(shareDates[i - 1]); };
+  document.getElementById('snext').onclick = function () { var i = shareDates.indexOf(shareCurrent); if (i >= 0 && i < shareDates.length - 1) loadShare(shareDates[i + 1]); };
 
   openTab(location.hash.slice(1) || 'plan');
   load('');

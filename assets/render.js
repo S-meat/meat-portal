@@ -263,5 +263,41 @@
     draw();
   }
 
-  root.PlanView = { render: render, jpDate: jpDate, relDay: relDay, esc: esc };
+  // ---------- 本日の共有 ----------
+  function renderShare(el, share) {
+    var groups = share.groups || [];
+    var html = '<div class="share-intro">Slack「本日の共有」の投稿を、要点だけ読みやすく整理しています。</div>';
+    if (!groups.length) html += '<div class="card"><div class="empty">共有する投稿はありません</div></div>';
+    groups.forEach(function (g) {
+      html += '<div class="card share-group"><div class="g-head"><h3>' + esc(g.channel.replace(/^\d+-/, '')) + '</h3><span class="sum">' + g.posts.length + '件</span></div>';
+      g.posts.forEach(function (p, idx) {
+        var body = '';
+        (p.sections || []).forEach(function (sec) {
+          body += (sec.title ? '<div class="sh-title">' + esc(sec.title) + '</div>' : '') +
+            '<ul class="sh-lines">' + sec.lines.map(function (l) {
+              var m = l.match(/^(.+?)：(.*)$/);
+              return '<li>' + (m && m[1].length <= 20 ? '<b>' + esc(m[1]) + '</b>：' + esc(m[2]) : esc(l)) + '</li>';
+            }).join('') + '</ul>';
+        });
+        if (!body) body = '<div class="muted">資料（PDFなど）の共有です。くわしくはSlackで確認してください。</div>';
+        html += '<div class="sh-post' + (idx ? ' sep' : '') + '"><div class="sh-meta">' + esc(p.date) + ' ' + esc(p.time) + '　' + esc(p.author) +
+          (p.link ? '<a class="sh-link" href="' + esc(p.link) + '" target="_blank" rel="noopener">Slackで見る</a>' : '') + '</div>' +
+          '<div class="sh-body">' + body + '</div></div>';
+      });
+      html += '</div>';
+    });
+    el.innerHTML = html;
+    // 長い投稿はたたむ
+    [].forEach.call(el.querySelectorAll('.sh-body'), function (b) {
+      if (b.scrollHeight > 480) {
+        b.classList.add('clamp');
+        var more = document.createElement('button');
+        more.className = 'sh-more'; more.textContent = '続きを読む';
+        more.onclick = function () { b.classList.remove('clamp'); more.remove(); };
+        b.parentNode.appendChild(more);
+      }
+    });
+  }
+
+  root.PlanView = { render: render, renderShare: renderShare, jpDate: jpDate, relDay: relDay, esc: esc };
 })(window);

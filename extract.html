@@ -174,7 +174,7 @@
       finish(hit ? { ok: true, date: date } : { ok: false, error: '保存を確認できませんでした。暗証番号を確認してもう一度お試しください。' });
     };
     s.onerror = function () { finish({ ok: false, error: '通信エラー' }); };
-    s.src = CFG.GAS_URL + '?action=list&callback=' + cb + '&_=' + Date.now();
+    s.src = CFG.GAS_URL + '?action=list&key=' + encodeURIComponent($('pin').value.trim()) + '&callback=' + cb + '&_=' + Date.now();
     document.body.appendChild(s);
   }
 
