@@ -10,6 +10,7 @@
  *   SLACK_DAY_OFFSET  … 6:50の投稿で何日後の予定を出すか（0=当日 / 1=翌日、未設定は0）
  *   VIEW_KEY          … 閲覧用の合言葉（アプリを開くときに入力。未設定なら合言葉なしで開ける）
  *   SHARE_CHANNEL     … 「本日の共有」まとめが投稿されるチャンネル（未設定は #110 = C05G46NECKV）
+ *   PDF_CHANNELS      … PDFを表示してよいチャンネルID（カンマ区切り。未設定は #110,#201,#104,#601）
  *
  * 【デプロイ】ウェブアプリ / 実行ユーザー：自分 / アクセス：全員
  * ※ ES5 で記述（var・for ループのみ）
@@ -62,6 +63,10 @@ function doGet(e) {
       body = { ok: true, date: d, text: plan ? buildSlackText_(plan) : '' };
     } else if (action === 'share') {
       body = getShare_(p.date || '');
+    } else if (action === 'notes') {
+      body = { ok: true, notes: listShureiNotes_(Number(p.days || 4)) };
+    } else if (action === 'pdf') {
+      body = getPdf_(p.id || '');
     } else {
       var date = p.date || pickDefaultDate_();
       body = { ok: true, date: date, plan: date ? loadPlan_(date) : null, dates: listPlans_() };
@@ -415,7 +420,10 @@ function buildShare_(date) {
       if (post.channelId && post.ts) {
         try {
           var r = slackApi_('conversations.history', { channel: post.channelId, latest: post.ts, oldest: post.ts, inclusive: 'true', limit: 1 });
-          if (r.messages && r.messages.length) full = r.messages[0].text || '';
+          if (r.messages && r.messages.length) {
+            full = r.messages[0].text || '';
+            post.pdfs = pdfIds_(r.messages[0].files);
+          }
         } catch (e) {
           Logger.log('元投稿の取得失敗 ' + post.link + ' ' + e);
         }
@@ -584,4 +592,90 @@ function listShares_() {
 function testBuildShare() {
   var s = buildShare_(dateStr_(new Date()));
   Logger.log(s ? JSON.stringify(s, null, 1) : 'まとめ投稿が見つかりません');
+}
+
+// ============================================================
+//  PDF（終礼ノートなど）をアプリで表示する
+//   ・Slackのファイルを取り出してアプリへ渡す（合言葉が必要。Driveには置かない）
+//   ・決められたチャンネルのPDFだけ
+// ============================================================
+var DEFAULT_PDF_CHANNELS = ['C05G46NECKV', 'C03LVUDEQLA', 'C052Z27LEA3', 'C0BFRGAQJ03'];
+var PDF_MAX_BYTES = 15 * 1024 * 1024;
+
+function pdfIds_(files) {
+  var out = [];
+  for (var i = 0; i < (files || []).length; i++) {
+    var f = files[i];
+    if (f && (f.filetype === 'pdf' || f.mimetype === 'application/pdf')) out.push({ id: f.id, pages: f.pages || 0 });
+  }
+  return out;
+}
+
+function pdfChannels_() {
+  var v = PropertiesService.getScriptProperties().getProperty('PDF_CHANNELS');
+  return v ? v.split(/[,\s]+/).filter(function (x) { return x; }) : DEFAULT_PDF_CHANNELS;
+}
+
+/** #110 の最近の終礼ノート（PDF付きの投稿）。まとめBotの投稿は除く */
+function listShureiNotes_(days) {
+  var channel = PropertiesService.getScriptProperties().getProperty('SHARE_CHANNEL') || 'C05G46NECKV';
+  var cache = CacheService.getScriptCache();
+  var ck = 'notes:' + channel + ':' + days;
+  var hit = cache.get(ck);
+  if (hit) return JSON.parse(hit);
+  var oldest = String(Math.floor((new Date().getTime() - days * 86400000) / 1000));
+  var hist = slackApi_('conversations.history', { channel: channel, oldest: oldest, limit: 100 });
+  var out = [];
+  for (var i = 0; i < (hist.messages || []).length; i++) {
+    var m = hist.messages[i];
+    if (SHARE_TITLE_RE.test(m.text || '')) continue;
+    var pdfs = pdfIds_(m.files);
+    if (!pdfs.length) continue;
+    var d = new Date(Number(m.ts) * 1000);
+    out.push({
+      ts: m.ts,
+      date: Utilities.formatDate(d, 'Asia/Tokyo', 'M/d'),
+      time: Utilities.formatDate(d, 'Asia/Tokyo', 'H:mm'),
+      day: dateStr_(d),
+      text: cleanSlack_(m.text || '').replace(/\s+/g, ' ').trim().slice(0, 80),
+      pdfs: pdfs
+    });
+  }
+  cache.put(ck, JSON.stringify(out), 300);
+  return out;
+}
+
+/** PDF本体（base64）を返す */
+function getPdf_(id) {
+  if (!/^F[A-Z0-9]+$/.test(id)) throw new Error('ファイルの指定が不正です');
+  var info = slackApi_('files.info', { file: id }).file;
+  if (!(info.filetype === 'pdf' || info.mimetype === 'application/pdf')) throw new Error('PDFではありません');
+  var allowed = pdfChannels_(), chans = [].concat(info.channels || [], info.groups || []);
+  var shares = info.shares || {};
+  for (var kind in shares) if (shares.hasOwnProperty(kind)) for (var c in shares[kind]) if (shares[kind].hasOwnProperty(c)) chans.push(c);
+  var ok = false;
+  for (var i = 0; i < chans.length; i++) if (allowed.indexOf(chans[i]) >= 0) ok = true;
+  if (!ok) throw new Error('このファイルは表示できません');
+  if (info.size && info.size > PDF_MAX_BYTES) throw new Error('ファイルが大きすぎます（' + Math.round(info.size / 1048576) + 'MB）');
+  var token = PropertiesService.getScriptProperties().getProperty('SLACK_BOT_TOKEN');
+  var res = UrlFetchApp.fetch(info.url_private_download || info.url_private, {
+    headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true, followRedirects: true
+  });
+  if (res.getResponseCode() !== 200) throw new Error('ダウンロードできませんでした（' + res.getResponseCode() + '）');
+  var blob = res.getBlob();
+  var bytes = blob.getBytes();
+  if (bytes.length < 5 || String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]) !== '%PDF') {
+    throw new Error('PDFを取得できませんでした（Slackアプリに files:read の権限が必要です）');
+  }
+  var d = new Date(Number(info.created) * 1000);
+  return { ok: true, id: id, date: Utilities.formatDate(d, 'Asia/Tokyo', 'M/d H:mm'), data: Utilities.base64Encode(bytes) };
+}
+
+/** 動作確認用：最新の終礼ノートを取得してログに出す */
+function testShureiPdf() {
+  var notes = listShureiNotes_(7);
+  Logger.log('終礼ノート ' + notes.length + '件');
+  if (!notes.length) return;
+  var r = getPdf_(notes[0].pdfs[0].id);
+  Logger.log(notes[0].date + ' ' + notes[0].time + ' PDF取得OK（' + Math.round(r.data.length * 0.75 / 1024) + 'KB）');
 }
