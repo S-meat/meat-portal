@@ -246,7 +246,7 @@ function buildSlackText_(plan) {
   L.push('*【翌日分】* ' + (parts.length ? parts.join(' ／ ') : 'なし'));
 
   var url = PropertiesService.getScriptProperties().getProperty('APP_URL');
-  if (url) L.push('\n<' + url + '|:iphone: 詳しくはミートチームアプリで>');
+  if (url) L.push('\n<' + url + '|:iphone: 詳しくは MEAT LINK で>');
   return L.join('\n');
 }
 

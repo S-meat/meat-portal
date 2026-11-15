@@ -1,0 +1,25 @@
+{
+  "name": "MEAT LINK",
+  "short_name": "MEAT LINK",
+  "description": "ミートチームの作業予定・現場改善・シフト変更・希望休",
+  "start_url": "./#plan",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f5f2",
+  "theme_color": "#f5f5f2",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "assets/icon.png",
+      "sizes": "760x760",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-maskable.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
