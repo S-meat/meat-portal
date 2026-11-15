@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>社員用（A4）作業指示書の取り込み｜ミートチームアプリ</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="stylesheet" href="assets/poster.css">
+</head>
+<body>
+<div class="bar">社員用 A4シート：暗証番号の欄に入力してから印刷できます（入力した番号はどこにも保存・送信されません）
+  <button onclick="window.print()">印刷する</button>
+  <a href="poster-admin.pdf">空欄のPDF（手書き用）</a>
+  <a href="manual-admin.html">くわしいマニュアル</a>
+</div>
+
+<div class="sheet admin">
+  <div class="top">
+    <img src="assets/logo.png" width="584" height="610" alt="SAIBOKU">
+    <div><small>SAIBOKU 製造部 ミートチーム</small><h1>作業指示書の取り込み</h1></div>
+    <span class="tag">社員用・掲示しない</span>
+  </div>
+
+  <div class="qrrow">
+    <div class="qr"><img src="assets/manual/qr-extract.svg" alt="取り込みページのQRコード"></div>
+    <div>
+      <h2>取り込みページ</h2>
+      <p><span class="pill">パソコン推奨</span><span class="pill">指示書ができたらすぐ</span></p>
+      <p>指示書（Excel）を入れて共有すると、メンバーの「明日の予定」に表示されます。</p>
+      <p class="url">https://s-meat.github.io/meat-portal/extract.html</p>
+    </div>
+  </div>
+
+  <div class="pinrow">
+    <label for="pin">暗証番号</label>
+    <input id="pin" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="入力または手書き">
+    <small>この用紙は社員だけで管理してください。番号が変わったら書き直してください。</small>
+  </div>
+
+  <div>
+    <h3><span class="no">01</span>取り込みの手順</h3>
+    <div class="steps">
+      <div class="step"><div class="h"><i>1</i>指示書を入れる</div>
+        点線の枠にExcelファイルをドラッグ＆ドロップ（クリックして選んでもOK）。</div>
+      <div class="step"><div class="h"><i>2</i>読み取りを確認</div>
+        緑の帯が出たら成功。プレビューで作業日・パック数・責任者・当日分を確認。</div>
+      <div class="step"><div class="h"><i>3</i>共有する</div>
+        暗証番号を入れて「この内容で共有する」。番号はパソコンに記憶されます。</div>
+      <div class="step"><div class="h"><i>4</i>完了</div>
+        「○/○ の作業予定を共有しました」で完了。指示書を直したら、もう一度取り込むだけ（同じ日付は上書き）。</div>
+    </div>
+  </div>
+
+  <div class="warn"><b>指示書を作るときに変えないでください</b>（見出しの文字を目印に読み取っています）
+    <ul>
+      <li>シート名：内臓作業室／精肉パック作業室／当日分まとめ／翌日分まとめ</li>
+      <li>見出し：作業終了予定・総パック数・入荷頭数・現場責任者・特注、特記事項・商品名・作業予定・当日分・翌日分・「7:30～」などの時間の行</li>
+      <li>人員配置は「名前」＋勤務時間「8：30～14：45（45）」の形。休みは名前の右に「休み」。シート上部の日付も必ず入れる。</li>
+    </ul>
+  </div>
+
+  <div>
+    <h3><span class="no">02</span>エラーが出たとき</h3>
+    <table>
+      <tr><th>表示</th><th>対応</th></tr>
+      <tr><td>シートが見つかりません</td><td>シート名を元に戻す／別のファイルを選んでいないか確認</td></tr>
+      <tr><td>作業日（日付）が読み取れませんでした</td><td>シート上部の日付を入れ直す</td></tr>
+      <tr><td>暗証番号が違います</td><td>上の番号を確認。変わっていたら塚越に確認</td></tr>
+      <tr><td>人が足りない・作業が出ない</td><td>勤務時間の書き方「8：30～14：45（45）」、休みの人は「休み」になっているか確認</td></tr>
+      <tr><td>Excelファイルを選んでください</td><td>.xlsx（または .xlsm）で保存したファイルを選ぶ</td></tr>
+      <tr><td>保存を確認できませんでした</td><td>少し待ってもう一度「共有する」（上書きなので二重になりません）</td></tr>
+    </table>
+  </div>
+
+  <div class="foot">
+    <img src="assets/manual/qr-manual-admin.svg" alt="社員向けマニュアルのQRコード">
+    <div><b>くわしいマニュアル（画面の写真つき）</b><br>読み取りのルール・管理者向けメモもこちら。</div>
+    <span class="sp"></span>
+    <div class="who">製造部 1課<br>ミートチーム</div>
+  </div>
+</div>
+</body>
+</html>
