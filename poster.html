@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/poster.css">
 </head>
 <body>
-<div class="bar">A4・1枚の掲示用です
+<div class="bar">A4・1枚の掲示用です（合言葉の欄は入力してから印刷するか、印刷後に手書き）
   <button onclick="window.print()">印刷する</button>
   <a href="poster.pdf">PDFで開く</a>
   <a href="manual.html">くわしい使い方</a>
@@ -26,19 +26,26 @@
     <div>
       <h2>スマホのカメラで<br>QRコードを読み取ってください</h2>
       <p><span class="pill">ログイン不要</span><span class="pill">無料</span></p>
-      <p>明日の作業予定・現場改善・シフト変更・希望休が、このアプリひとつで見られます。</p>
+      <p>明日の作業予定・本日の共有・現場改善・シフト変更・希望休が、このアプリひとつで見られます。はじめて開くときに「合言葉」を入れます。</p>
       <p class="url">https://s-meat.github.io/meat-portal/</p>
     </div>
   </div>
 
   <div>
     <h3><span class="no">01</span>できること（画面の上のボタンで切り替え）</h3>
-    <div class="tabs">
+    <div class="tabs five">
       <div><b>明日の予定</b>だれが・何時に・何をするか。何を何パック作るか。</div>
+      <div><b>本日の共有</b>朝6:50のSlackのまとめ（特注・クレームなど）の要点。</div>
       <div><b>現場改善</b>改善のアイデアや困りごとを送る。</div>
       <div><b>シフト変更</b>シフト変更・当日欠勤の申請。</div>
       <div><b>希望休</b>希望休・時間指定・有給の申請。</div>
     </div>
+  </div>
+
+  <div class="pinrow keyrow">
+    <label for="key">合言葉</label>
+    <input id="key" type="text" autocomplete="off" spellcheck="false" placeholder="入力または手書き">
+    <small>はじめて開くときに入力します。わからないときは社員に聞いてください。</small>
   </div>
 
   <div>
@@ -58,7 +65,7 @@
         「自分の予定」で名前を選ぶと、何時から何の作業かが出ます。次からは自動で選ばれます。
         <img src="assets/manual/m-me.png" alt="自分の予定"></div>
       <div class="pt"><span class="hd"><span class="n">2</span><b>黄色い枠は必ず読む</b></span>
-        社員からの連絡（特記事項）です。作業の前に必ず読んでください。
+        社員からの連絡です。作業の前に必ず読んでください。
         <img src="assets/manual/m-note.png" alt="特記事項"></div>
       <div class="pt"><span class="hd"><span class="n">3</span><b>「当日分」「急ぎ」を確認</b></span>
         <span><span class="chip">当日分あり</span> <span class="chip">急ぎ</span> が出たら、「当日分」を押して先に作る商品を確認。</span>

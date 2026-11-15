@@ -192,7 +192,7 @@
   function load(date) {
     planEl.innerHTML = '<div class="state"><div class="spinner"></div>読み込み中…</div>';
     fetchPlan(date).then(function (res) {
-      if (res.needKey) { document.getElementById('dlabel').innerHTML = '<b>作業予定</b>'; showKey(planEl, res.error, function () { load(date); }); return; }
+      if (res.needKey) { document.getElementById('dlabel').innerHTML = '<b>作業予定</b>'; document.getElementById('prev').disabled = document.getElementById('next').disabled = true; showKey(planEl, res.error, function () { load(date); }); return; }
       if (!res.ok) throw new Error(res.error || '読み込みに失敗しました');
       dates = (res.dates || []).map(function (d) { return d.date; });
       current = res.date || '';
@@ -239,7 +239,7 @@
     shareEl.innerHTML = '<div class="state"><div class="spinner"></div>読み込み中…</div>';
     if (!CFG.GAS_URL) { shareEl.innerHTML = '<div class="state"><b>GAS_URL が未設定です</b></div>'; return; }
     jsonp(CFG.GAS_URL + '?action=share' + (date ? '&date=' + encodeURIComponent(date) : '')).then(function (res) {
-      if (res.needKey) { document.getElementById('slabel').innerHTML = '<b>本日の共有</b>'; showKey(shareEl, res.error, function () { loadShare(date); }); return; }
+      if (res.needKey) { document.getElementById('slabel').innerHTML = '<b>本日の共有</b>'; document.getElementById('sprev').disabled = document.getElementById('snext').disabled = true; showKey(shareEl, res.error, function () { loadShare(date); }); return; }
       if (!res.ok) throw new Error(res.error || '読み込みに失敗しました');
       shareDates = res.dates || [];
       shareCurrent = res.date || '';

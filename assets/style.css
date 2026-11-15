@@ -176,4 +176,5 @@ body.dragging .drop{border-color:var(--ink);background:#fafaf6}
 .sh-body.clamp{max-height:420px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
 .sh-more{border:0;background:none;color:var(--ink);font-weight:700;font-size:13px;text-decoration:underline;padding:4px 0;cursor:pointer}
 .keycard .field input{font-size:16px}
+.keybtn{white-space:nowrap;flex:none;padding:12px 18px}
 @media (max-width:640px){#tabs button{font-size:11px;padding:9px 2px}}
