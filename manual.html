@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f2">
+<title>使い方｜ミートチームアプリ（メンバー向け）</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/logo-original.png">
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<header class="head"><div class="in">
+  <img src="assets/logo.png" width="584" height="610" alt="SAIBOKU">
+  <div><small>SAIBOKU 製造部</small><b>ミートチームアプリの使い方</b></div>
+  <span class="sp"></span>
+  <a class="btn" href="index.html#plan">アプリを開く</a>
+</div></header>
+
+<main>
+  <div class="hero">
+    <h1>ミートチームアプリ<br>使い方ガイド（メンバー向け）</h1>
+    <p>明日の作業予定・現場改善・シフト変更・希望休が、ひとつのアプリで見られます。ログインは不要です。</p>
+  </div>
+
+  <nav class="toc"><b>目次</b>
+    <ol>
+      <li><a href="#s1">このアプリでできること</a></li>
+      <li><a href="#s2">アプリの開き方（ホーム画面に追加）</a></li>
+      <li><a href="#s3">明日の作業予定を見る</a></li>
+      <li><a href="#s4">自分の予定を見る</a></li>
+      <li><a href="#s5">作業室ごとのくわしい予定</a></li>
+      <li><a href="#s6">当日分・翌日分を見る</a></li>
+      <li><a href="#s7">現場改善・シフト変更・希望休</a></li>
+      <li><a href="#s8">こんなときは</a></li>
+    </ol>
+  </nav>
+
+  <section id="s1">
+    <h2><span class="no">01</span>このアプリでできること</h2>
+    <p>画面の上にある4つのボタン（タブ）を押して、見たいページに切り替えます。</p>
+    <img class="shot phone" src="assets/manual/m-top.png" width="1170" height="1680" alt="アプリの上部" loading="lazy">
+    <div class="tabs">
+      <div><b>明日の予定</b>作業指示書の内容。誰がどこで何をするか、何を何パック作るか。</div>
+      <div><b>現場改善</b>「こうしたら良くなる」の提案を送るフォーム。</div>
+      <div><b>シフト変更</b>シフト変更・当日欠勤の申請。</div>
+      <div><b>希望休</b>希望休・時間指定・有給の申請。</div>
+    </div>
+  </section>
+
+  <section id="s2">
+    <h2><span class="no">02</span>アプリの開き方</h2>
+    <div class="qr">
+      <img src="assets/manual/qr-portal.svg" alt="アプリのQRコード">
+      <div><p><b>スマホのカメラでQRコードを読み取ってください。</b></p>
+        <p class="url">https://s-meat.github.io/meat-portal/</p></div>
+    </div>
+    <h3>ホーム画面に追加しておくと便利です</h3>
+    <div class="grid2">
+      <div class="box"><b>iPhone（Safari）</b>
+        <ol><li>画面下の <kbd>共有</kbd>（□に↑のマーク）を押す</li><li>「ホーム画面に追加」を押す</li><li>右上の「追加」を押す</li></ol></div>
+      <div class="box"><b>Android（Chrome）</b>
+        <ol><li>右上の <kbd>︙</kbd> を押す</li><li>「ホーム画面に追加」を押す</li><li>「追加」を押す</li></ol></div>
+    </div>
+    <p>ホーム画面にブタのマークが出たら完了です。次からはそこから開けます。</p>
+  </section>
+
+  <section id="s3">
+    <h2><span class="no">03</span>明日の作業予定を見る</h2>
+    <p>アプリを開くと「明日の予定」が表示されます。</p>
+    <ul>
+      <li><b>日付</b>：表示している作業日です。横に「明日」「今日」などと出ます。</li>
+      <li><b>‹ ›</b>：前の日・次の日の予定に切り替えます。</li>
+      <li><b>○/○ ○:○○ 更新</b>：作業予定が最後に取り込まれた時刻です。</li>
+    </ul>
+    <h3>黒いカード（まとめ）</h3>
+    <p>内臓作業室・精肉パック作業室それぞれの <b>パック数・終了予定・責任者</b> がひと目でわかります。</p>
+    <ul>
+      <li><span class="chip" style="background:#e5484d;color:#fff">当日分あり</span> … その日に作って出す商品があります。下の「当日分」を必ず見てください。</li>
+      <li><span class="chip" style="background:#e5484d;color:#fff">急ぎ</span> … 急ぎの商品がある数です。</li>
+      <li><span class="chip" style="background:#333;color:#ddd">当日分なし</span> … 当日分はありません。</li>
+    </ul>
+  </section>
+
+  <section id="s4">
+    <h2><span class="no">04</span>自分の予定を見る</h2>
+    <p>「自分の予定」で <b>自分の名前</b> を選ぶと、何時から何の作業をするかが出ます。</p>
+    <img class="shot phone" src="assets/manual/m-me.png" alt="自分の予定" loading="lazy">
+    <ul>
+      <li>一度選ぶと、次からは自動で自分の名前が選ばれています。</li>
+      <li>休みの日は「休み」と出ます。</li>
+      <li>名前が見つからないときは、その日の指示書に名前が入っていません。社員に確認してください。</li>
+    </ul>
+  </section>
+
+  <section id="s5">
+    <h2><span class="no">05</span>作業室ごとのくわしい予定</h2>
+    <p>黒いカードの下にあるボタンで、見たい作業室を切り替えます。</p>
+    <img class="shot phone" src="assets/manual/m-sections.png" alt="作業室の切り替え" loading="lazy">
+
+    <h3>数字のまとめ</h3>
+    <p>入荷頭数・総パック数・作業終了予定・責任者です。小さい字は「昨日」の実績です。</p>
+    <img class="shot phone" src="assets/manual/m-kpi.png" alt="数字のまとめ" loading="lazy">
+
+    <h3>特記事項（黄色い枠）</h3>
+    <img class="shot phone" src="assets/manual/m-note.png" alt="特記事項" loading="lazy">
+    <div class="point"><b>大事</b>黄色い枠は、社員からの連絡です。作業の前に必ず読んでください。</div>
+
+    <h3>人員配置（だれが・何時に・何をするか）</h3>
+    <p>左に名前と勤務時間、右に時間ごとの作業が色付きで出ます。表は <b>横にスクロール</b> できます。自分の行には「自分」マークが付きます。一番下に、休みの人がまとめて出ます。</p>
+    <img class="shot phone" src="assets/manual/m-staff.png" alt="人員配置" loading="lazy">
+
+    <h3>商品別の作業予定（内臓作業室）</h3>
+    <p>商品ごとに「当日分」「翌日分」を何パック作るかが出ます。数が0の商品はかくしています。全部見たいときは「0の商品も表示」にチェックを入れてください。</p>
+    <img class="shot phone" src="assets/manual/m-products.png" alt="商品別の作業予定" loading="lazy">
+  </section>
+
+  <section id="s6">
+    <h2><span class="no">06</span>当日分・翌日分を見る</h2>
+    <p>「当日分」「翌日分」を押すと、売場ごと（スライサー・内臓・AtoZ・まな板・詰め物など）に、作る商品と数が出ます。</p>
+    <img class="shot phone" src="assets/manual/m-today.png" alt="当日分" loading="lazy">
+    <ul>
+      <li><span class="chip" style="background:#b42318;color:#fff">急ぎ</span> が付いた商品は先に作ってください。</li>
+      <li>上の丸いラベルは、ラベルに印字する <b>賞味期限</b> の目安です（D+2 ＝ 作業日の2日後）。</li>
+      <li>数が0の商品はかくしています。「0の商品も表示」で全部見られます。</li>
+    </ul>
+    <div class="point"><b>当日分があるとき</b>出庫時間とラベルの日付に注意してください。</div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="no">07</span>現場改善・シフト変更・希望休</h2>
+    <p>上のタブを押すと、それぞれのページがアプリの中に開きます。使い方は今までと同じです。</p>
+    <ul>
+      <li><b>現場改善</b>：改善のアイデアや困りごとを送るフォームです。</li>
+      <li><b>シフト変更</b>：シフト変更・当日欠勤は、紙ではなくここから申請します。</li>
+      <li><b>希望休</b>：カレンダーで日付を押して申請します。（1回押す＝希望休、すばやく2回＝時間指定・有給）</li>
+    </ul>
+    <p>うまく表示されないときは、ページ上の <b>「表示されない時は別タブで開く ↗」</b> を押してください。</p>
+    <div class="point"><b>希望休申請のURLが変わりました</b>前の希望休アプリを開くと「URLが変わりました」と出ます。「新しいアプリを開く」を押して、新しい方をホーム画面に追加し直してください。</div>
+  </section>
+
+  <section id="s8">
+    <h2><span class="no">08</span>こんなときは</h2>
+    <table>
+      <tr><th>こまったこと</th><th>どうする</th></tr>
+      <tr><td>「作業予定がまだありません」と出る</td><td>まだ作業指示書が取り込まれていません。少し待ってから開き直してください。</td></tr>
+      <tr><td>「読み込めませんでした」と出る</td><td>電波の良い所で「再読み込み」を押してください。</td></tr>
+      <tr><td>前の内容のまま変わらない</td><td>アプリを閉じて、もう一度開いてください。</td></tr>
+      <tr><td>自分の名前がない・内容がちがう</td><td>指示書の内容をそのまま表示しています。社員に伝えてください。</td></tr>
+      <tr><td>別の人の名前が選ばれている</td><td>「自分の予定」で自分の名前を選び直してください。</td></tr>
+    </table>
+  </section>
+
+  <p class="foot">製造部 1課 ミートチーム　／　画面の写真は見本です（名前は仮のものです）</p>
+</main>
+</body>
+</html>

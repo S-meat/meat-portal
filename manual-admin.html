@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f2">
+<title>作業指示書の取り込みマニュアル（社員向け）｜ミートチームアプリ</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<header class="head"><div class="in">
+  <img src="assets/logo.png" width="584" height="610" alt="SAIBOKU">
+  <div><small>SAIBOKU 製造部</small><b>作業指示書の取り込みマニュアル</b></div>
+  <span class="sp"></span>
+  <a class="btn" href="extract.html">取り込みを開く</a>
+</div></header>
+
+<main>
+  <div class="hero">
+    <h1>作業指示書の取り込み<br>マニュアル（社員向け）</h1>
+    <p>作業指示書（Excel）をアプリに取り込んで、メンバーのスマホに「明日の作業予定」を表示するための手順です。</p>
+  </div>
+
+  <nav class="toc"><b>目次</b>
+    <ol>
+      <li><a href="#a1">しくみと流れ</a></li>
+      <li><a href="#a2">いつ・だれが取り込むか</a></li>
+      <li><a href="#a3">取り込みの手順</a></li>
+      <li><a href="#a4">指示書を作るときの注意（読み取りのルール）</a></li>
+      <li><a href="#a5">エラーが出たとき</a></li>
+      <li><a href="#a6">メンバーへの案内</a></li>
+      <li><a href="#a7">管理者向けメモ</a></li>
+    </ol>
+  </nav>
+
+  <section id="a1">
+    <h2><span class="no">01</span>しくみと流れ</h2>
+    <div class="flow">
+      <div><b>① 指示書を作る</b>いつも通りExcelで作成</div><i>→</i>
+      <div><b>② 取り込む</b>取り込みページにファイルを入れる</div><i>→</i>
+      <div><b>③ 確認して共有</b>暗証番号を入れて共有</div><i>→</i>
+      <div><b>④ メンバーが見る</b>アプリの「明日の予定」に表示</div>
+    </div>
+    <p>指示書の中から、次の <b>4つのシート</b> だけを読み取ります。</p>
+    <table>
+      <tr><th>シート名</th><th>読み取る内容</th></tr>
+      <tr><td>内臓作業室</td><td>作業日、入荷頭数、総パック数、作業終了予定、現場責任者、特注・特記事項、昨日の実績、人員配置（名前・勤務時間・時間ごとの作業・休み）、商品別の当日分／翌日分の数、必要原木数</td></tr>
+      <tr><td>精肉パック作業室</td><td>作業日、総パック数、作業終了予定、精肉作業室・半加工室包装室の責任者、特記・連絡事項、出勤人数、昨日の実績、人員配置</td></tr>
+      <tr><td>当日分まとめ</td><td>売場ごと（スライサー・HB味噌・内臓・AtoZ・まな板切身・詰め物）の商品と数、急ぎ、賞味期限（D+○）</td></tr>
+      <tr><td>翌日分まとめ</td><td>同上（翌日分）</td></tr>
+    </table>
+    <ul>
+      <li>ファイルは <b>パソコンのブラウザの中だけ</b> で読み取ります。Excelファイル自体はどこにも送られません。送られるのは読み取った内容だけです。</li>
+      <li>読み取った内容はスプレッドシートに日付ごとに保存され、60日を過ぎると自動で消えます。</li>
+    </ul>
+  </section>
+
+  <section id="a2">
+    <h2><span class="no">02</span>いつ・だれが取り込むか</h2>
+    <ul>
+      <li><b>指示書ができたらすぐ</b>（前日の終業前まで）に取り込んでください。メンバーは前日のうちに翌日の予定を確認できます。</li>
+      <li>指示書を直したときは、<b>もう一度取り込む</b> だけでOKです。同じ作業日の内容は上書きされます。</li>
+      <li>取り込みには <b>暗証番号</b> が必要です。暗証番号は塚越から聞いてください（このマニュアルには書きません）。</li>
+    </ul>
+  </section>
+
+  <section id="a3">
+    <h2><span class="no">03</span>取り込みの手順</h2>
+    <div class="qr">
+      <img src="assets/manual/qr-extract.svg" alt="取り込みページのQRコード">
+      <div><p><b>取り込みページ</b>（パソコン推奨）</p>
+        <p class="url">https://s-meat.github.io/meat-portal/extract.html</p>
+        <p>共有アプリの一番下「作業指示書を取り込む（担当者用）」からも開けます。</p></div>
+    </div>
+
+    <ol class="steps">
+      <li><b>指示書のファイルを入れる</b><br>
+        点線の枠にExcelファイルを <b>ドラッグ＆ドロップ</b> します。枠をクリックしてファイルを選んでもOKです。
+        <img class="shot" src="assets/manual/e-start.png" alt="取り込みページ" loading="lazy">
+      </li>
+      <li><b>読み取れたか確認する</b><br>
+        緑の帯で「○○.xlsx を読み取りました」と出れば成功です。
+        <img class="shot" src="assets/manual/e-read.png" alt="読み取り成功" loading="lazy">
+        画面の下に、メンバーが見る画面と同じプレビューが出ます。<b>作業日・パック数・終了予定・責任者・当日分</b> が合っているか確認してください。
+        <img class="shot" src="assets/manual/e-preview.png" alt="プレビュー" loading="lazy">
+      </li>
+      <li><b>暗証番号を入れて共有する</b><br>
+        「02 共有する」に作業日と人数・合計が出ます。暗証番号を入れて「この内容で共有する」を押します。
+        <img class="shot" src="assets/manual/e-share.png" alt="共有する" loading="lazy">
+      </li>
+      <li><b>完了</b><br>
+        「○/○ の作業予定を共有しました」と出たら完了です。「共有アプリで見る」でメンバーの画面を確認できます。
+        <img class="shot" src="assets/manual/e-done.png" alt="共有完了" loading="lazy">
+      </li>
+    </ol>
+    <div class="point"><b>ポイント</b>暗証番号は一度成功すると、そのパソコンに記憶されます。次からは入力しなくても共有できます。</div>
+  </section>
+
+  <section id="a4">
+    <h2><span class="no">04</span>指示書を作るときの注意（読み取りのルール）</h2>
+    <p>アプリはセルの位置ではなく、<b>見出しの文字</b> を目印にして読み取ります。行が増えたり減ったりしても大丈夫ですが、次のことは守ってください。</p>
+    <div class="warn"><b>変えないでください</b>
+      <ul>
+        <li>4つの <b>シート名</b>（内臓作業室／精肉パック作業室／当日分まとめ／翌日分まとめ）</li>
+        <li>見出しの文字：「作業終了予定」「総パック数」「入荷頭数」「昨日の実績」「終了時間」「現場責任者」「特注、特記事項」「○○責任者」「特記、その他の連絡事項」「出勤人数」「商品名」「重量目安」「作業予定」「当日分」「翌日分」</li>
+        <li>時間の見出し「7:30～」「8:00～」…の行</li>
+        <li>まとめシートの売場見出しの右隣が「当日分」になっている形と、1行目の「賞味D+○の商品」</li>
+      </ul>
+    </div>
+    <h3>人員配置の書き方</h3>
+    <ul>
+      <li>A列に名前、B列に勤務時間を <b>「8：30～14：45（45）」</b> の形で入れた行を「人」として読みます。勤務時間がない行は読みません。</li>
+      <li>休みの人は、名前の右の欄に「休み」と入れてください（アプリでは「休み」としてまとめて表示）。</li>
+      <li>時間ごとの欄に入れた作業名（パック・マルチ・内臓・挽肉など）が、そのまま色付きで表示されます。</li>
+    </ul>
+    <h3>読まないところ</h3>
+    <ul>
+      <li>各シートの右側（内臓作業室はN列より右、精肉パック作業室はO列より右）にある名簿・作業リスト・メモ欄は読みません。</li>
+      <li>作業日は各シート上部の日付を使います。日付が入っていないと取り込めません。</li>
+      <li>数量が0の商品は、メンバー画面では最初はかくれて表示されます。</li>
+    </ul>
+  </section>
+
+  <section id="a5">
+    <h2><span class="no">05</span>エラーが出たとき</h2>
+    <img class="shot" src="assets/manual/e-error.png" alt="エラー表示の例" loading="lazy">
+    <table>
+      <tr><th>表示</th><th>原因と対応</th></tr>
+      <tr><td>シートが見つかりません：○○</td><td>シート名が変わっている、または別のファイルです。シート名を元に戻してください。</td></tr>
+      <tr><td>作業日（日付）が読み取れませんでした</td><td>シート上部の日付が空、または文字になっています。日付を入れ直してください。</td></tr>
+      <tr><td>Excelファイル（.xlsx / .xlsm）を選んでください</td><td>Excel以外のファイルです。.xlsx で保存したものを選んでください。</td></tr>
+      <tr><td>暗証番号が違います</td><td>暗証番号を確認してください。変更された場合は塚越に確認してください。</td></tr>
+      <tr><td>保存を確認できませんでした</td><td>通信が不安定です。少し待ってからもう一度「共有する」を押してください（同じ日付は上書きなので、二重になりません）。</td></tr>
+      <tr><td>読み取りライブラリを読み込めませんでした</td><td>ネットにつながっていません。接続を確認してページを開き直してください。</td></tr>
+      <tr><td>人が足りない・作業が出ない</td><td>勤務時間の書き方（「8：30～14：45（45）」の形）を確認してください。</td></tr>
+    </table>
+  </section>
+
+  <section id="a6">
+    <h2><span class="no">06</span>メンバーへの案内</h2>
+    <ul>
+      <li>メンバー向けの使い方ガイド：<a href="manual.html">manual.html</a>（QRコード・ホーム画面追加の方法つき）</li>
+      <li>希望休申請は新しいURLに変わりました。前のURLを開くと「URLが変わりました」の案内が出ます。新しいアプリをホーム画面に追加し直すよう伝えてください。</li>
+      <li>シフト変更・当日欠勤は紙ではなく、アプリの「シフト変更」から申請する運用です。</li>
+    </ul>
+  </section>
+
+  <section id="a7">
+    <h2><span class="no">07</span>管理者向けメモ</h2>
+    <table>
+      <tr><th>項目</th><th>内容</th></tr>
+      <tr><td>共有アプリ</td><td>https://s-meat.github.io/meat-portal/（GitHub：S-meat/meat-portal）</td></tr>
+      <tr><td>データの保存・配信</td><td>Apps Script「ミートチームポータル（作業予定API）」／保存先スプレッドシート「ミートチーム 作業予定データ（ポータル用）」</td></tr>
+      <tr><td>暗証番号の変更</td><td>Apps Script → プロジェクトの設定 → スクリプト プロパティ → <code>UPLOAD_PIN</code> を書き換えて保存（再デプロイ不要）</td></tr>
+      <tr><td>タブのリンク先の変更</td><td>リポジトリの <code>assets/config.js</code> の <code>LINKS</code></td></tr>
+      <tr><td>Slack #110（6:50）</td><td>Apps Script の <code>?action=slack</code> でまとめ用の文面を返します。既存のまとめBotへの組み込み、または <code>SLACK_BOT_TOKEN</code> 設定＋<code>setupTriggers</code> 実行で単独投稿（README参照）</td></tr>
+      <tr><td>希望休申請</td><td>画面：https://s-meat.github.io/shift/（GitHub：S-meat/shift）／Apps Script はAPI専用。旧URLは案内ページ</td></tr>
+    </table>
+  </section>
+
+  <p class="foot">製造部 1課 ミートチーム　／　画面の写真は見本です（名前は仮のものです）</p>
+</main>
+</body>
+</html>

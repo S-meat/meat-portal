@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f5f5f2">
 <title>作業指示書の取り込み｜ミートチーム</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/logo-original.png">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 <header class="app-head">
   <div class="brand">
-    <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#111"/><path d="M8 22V10h3l5 7 5-7h3v12h-3v-7l-5 6.5-5-6.5v7z" fill="#fff"/></svg>
+    <img class="logo" src="assets/logo.png" width="584" height="610" alt="SAIBOKU" decoding="async">
     <div><small>SAIBOKU 製造部</small><b>作業指示書の取り込み</b></div>
     <span class="spacer"></span>
+    <a class="pill line" href="manual-admin.html" style="text-decoration:none">マニュアル</a>
     <a class="pill line" href="index.html#plan" style="text-decoration:none">共有アプリへ</a>
   </div>
 </header>
@@ -82,18 +85,36 @@
   }
 
   // ---------- ファイル読み込み ----------
-  var drop = $('drop');
-  ['dragenter', 'dragover'].forEach(function (ev) {
-    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); });
+  // ページのどこに落としても受け付ける（ブラウザがファイルを開いてしまうのも防ぐ）
+  var drop = $('drop'), dragDepth = 0;
+  function hasFiles(e) {
+    var t = e.dataTransfer && e.dataTransfer.types;
+    return t && Array.prototype.indexOf.call(t, 'Files') >= 0;
+  }
+  window.addEventListener('dragenter', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); dragDepth++; document.body.classList.add('dragging');
   });
-  ['dragleave', 'drop'].forEach(function (ev) {
-    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+  window.addEventListener('dragover', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
   });
-  drop.addEventListener('drop', function (e) { if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); });
+  window.addEventListener('dragleave', function (e) {
+    if (!hasFiles(e)) return;
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (!dragDepth) document.body.classList.remove('dragging');
+  });
+  window.addEventListener('drop', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging');
+    var f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handle(f);
+  });
   $('file').addEventListener('change', function (e) { if (e.target.files[0]) handle(e.target.files[0]); e.target.value = ''; });
 
   function handle(file) {
     msg('parseMsg', '', '');
+    if (!/\.(xlsx|xlsm)$/i.test(file.name)) { msg('parseMsg', 'err', 'Excelファイル（.xlsx / .xlsm）を選んでください：' + esc(file.name)); return; }
     msg('shareMsg', '', '');
     if (typeof XLSX === 'undefined') { msg('parseMsg', 'err', '読み取りライブラリを読み込めませんでした。ネット接続を確認してください。'); return; }
     var reader = new FileReader();

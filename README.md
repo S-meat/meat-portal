@@ -20,6 +20,8 @@ _demo/sample-plan.json … 11/16の指示書から抽出した見本データ（
 
 - 共有アプリ: https://s-meat.github.io/meat-portal/
 - 抽出アプリ: https://s-meat.github.io/meat-portal/extract.html
+- 使い方（メンバー向け）: https://s-meat.github.io/meat-portal/manual.html
+- 取り込みマニュアル（社員向け）: https://s-meat.github.io/meat-portal/manual-admin.html
 - GAS（API）: プロジェクト「ミートチームポータル（作業予定API）」
   https://script.google.com/macros/s/AKfycbzluIQS2f70q-PWnUw1Jpgql-xiG4tMU3ap-hXcmcf0Mbt0_c6dudgoavMrVM-3fXj7/exec
 

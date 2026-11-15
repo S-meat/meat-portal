@@ -8,14 +8,18 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ミートチーム">
 <title>ミートチーム</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/logo-original.png">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
 <header class="app-head" id="head">
   <div class="brand">
-    <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#111"/><path d="M8 22V10h3l5 7 5-7h3v12h-3v-7l-5 6.5-5-6.5v7z" fill="#fff"/></svg>
+    <img class="logo" src="assets/logo.png" width="584" height="610" alt="SAIBOKU" decoding="async">
     <div><small>SAIBOKU 製造部</small><b>ミートチーム</b></div>
+    <span class="spacer"></span>
+    <a class="pill line" href="manual.html" style="text-decoration:none">使い方</a>
   </div>
   <nav class="seg" role="tablist" id="tabs">
     <button role="tab" data-tab="plan"><span class="long">明日の作業予定</span><span class="short">明日の予定</span></button>
@@ -33,9 +37,9 @@
       <div class="d" id="dlabel"></div>
       <button class="icon-btn" id="next" aria-label="次の日">›</button>
     </div>
-    <div id="plan"><div class="state"><div class="spinner"></div>読み込み中…</div></div>
+    <div id="planBody"><div class="state"><div class="spinner"></div>読み込み中…</div></div>
     <p class="muted" style="text-align:center;margin-top:24px">
-      <a href="extract.html">作業指示書を取り込む（担当者用）</a>
+      <a href="manual.html">使い方ガイド</a>　／　<a href="extract.html">作業指示書を取り込む（担当者用）</a>
     </p>
   </div>
 </main>
@@ -101,7 +105,7 @@
 
   // ---------- 作業予定の読み込み ----------
   var dates = [], current = '';
-  var planEl = document.getElementById('plan');
+  var planEl = document.getElementById("planBody");
 
   function jsonp(url) {
     return new Promise(function (resolve, reject) {
