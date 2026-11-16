@@ -63,3 +63,5 @@ kbd{font-family:inherit;font-size:13px;border:1px solid #ccc;border-bottom-width
   section{padding:12px 14px;margin-bottom:10px}
   .hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+.force-mobile .grid2,.force-mobile .tabs{grid-template-columns:1fr}
+.force-mobile .hero h1{font-size:20px}

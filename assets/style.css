@@ -208,3 +208,14 @@ body.dragging .drop{border-color:var(--ink);background:#fafaf6}
 .pdf-ph.err{color:var(--warn)}
 .pdf-note{font-size:12px;color:var(--sub);margin-top:6px}
 .shurei .pdf-inline{border:0;background:#f0efea}
+
+/* PC版サイト表示のスマホ（assets/fit.js が html に .force-mobile を付ける）でもスマホ用の並びに */
+.force-mobile .kpis{grid-template-columns:repeat(2,1fr)}
+.force-mobile .hero{grid-template-columns:1fr}
+.force-mobile .hero .room+.room{border-left:0;padding-left:0;border-top:1px solid #333;padding-top:12px}
+.force-mobile .rules{grid-template-columns:1fr}
+.force-mobile .seg button{font-size:12px}
+.force-mobile .seg .long{display:none}
+.force-mobile .seg .short{display:inline}
+.force-mobile #tabs button{font-size:11px;padding:9px 2px}
+.force-mobile .groups{grid-template-columns:1fr}
