@@ -230,17 +230,46 @@
       (anyPositive || showZero ? '<div class="groups">' + cards + '</div>' : '<div class="card"><div class="empty"><b style="font-size:16px;color:var(--ink)">' + esc(title) + 'はありません</b></div></div>');
   }
 
+  // ---------- ギフト予定 ----------
+  function ymd(d) { return d.getFullYear() + '-' + (d.getMonth() < 9 ? '0' : '') + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate(); }
+  function giftHTML(gift, state, opt) {
+    opt = opt || {};
+    if (state === 'loading') return '<div class="card"><div class="empty">ギフト予定を読み込み中…</div></div>';
+    if (!gift) return '<div class="card"><div class="empty"><b style="font-size:15px;color:var(--ink)">ギフト予定はまだありません</b><br>バランス照会を取り込むと表示されます。</div></div>';
+    var t = new Date(); t.setDate(t.getDate() + 1);
+    var from = ymd(t);
+    var days = opt.all ? gift.dates.slice() : gift.dates.filter(function (d) { return d.date >= from; }).slice(0, 7);
+    var upd = gift.updatedAt || gift.importedAt;
+    var updText = '';
+    if (upd) { var u = new Date(upd); updText = (u.getMonth() + 1) + '/' + u.getDate() + ' ' + u.getHours() + ':' + ('0' + u.getMinutes()).slice(-2) + ' 取り込み'; }
+    if (!days.length) return '<div class="card"><div class="empty">明日以降のギフト予定がありません（' + esc(updText) + '）<br>新しいバランス照会を取り込んでください。</div></div>';
+    var head = '<tr><th class="gn">品目</th>' + days.map(function (d) {
+      var wk = d.label.replace(/^.*\(/, '').replace(')', '');
+      return '<th class="q' + (wk === '土' ? ' sat' : wk === '日' ? ' sun' : '') + '">' + esc(d.label.replace(/\(.\)$/, '')) + '<small>' + esc(wk) + '</small></th>';
+    }).join('') + '</tr>';
+    var rows = gift.items.map(function (it) {
+      return '<tr><td class="gn"><b>' + esc(it.name) + '</b>' + (it.unit ? '<span>' + esc(it.unit === 'P' ? 'パック' : it.unit) + '</span>' : '') + '</td>' + days.map(function (d) {
+        var v = it.values[d.date] || 0;
+        return '<td class="q">' + (v ? '<b>' + n1(v) + '</b>' : '<span class="z">–</span>') + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    return '<div class="card"><div class="toolbar"><h2 style="margin:0"><span class="num">GIFT</span>' + (opt.all ? 'ギフト予定（取り込み内容）' : 'ギフト予定（明日から）') + '</h2><span class="muted">' + esc(updText) + '</span></div>' +
+      '<div class="gift-scroll"><table class="gift"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>' +
+      '<p class="muted" style="margin:8px 0 0">単位：ヒレ＝本、ロース切身・味噌＝枚、しゃぶ・スライス＝パック</p></div>';
+  }
+
   // ---------- 本体 ----------
-  var SECTIONS = [['pack', '精肉パック'], ['naizo', '内臓作業室'], ['today', '当日分'], ['next', '翌日分']];
+  var SECTIONS = [['pack', '精肉パック'], ['naizo', '内臓作業室'], ['today', '当日分'], ['next', '翌日分'], ['gift', 'ギフト']];
 
   function render(el, plan, opt) {
     opt = opt || {};
-    var state = { sec: opt.section || 'pack', me: opt.me || '', zero: false };
+    var state = { sec: opt.section || 'pack', me: opt.me || '', zero: false, gift: opt.gift || null, giftState: opt.gift ? 'done' : 'loading' };
 
     function draw() {
       var body;
       if (state.sec === 'naizo') body = naizoHTML(plan, state.me, state.zero);
       else if (state.sec === 'pack') body = packHTML(plan, state.me);
+      else if (state.sec === 'gift') body = giftHTML(state.gift, state.giftState);
       else if (state.sec === 'today') body = summaryHTML(plan.today, '当日分', state.zero);
       else body = summaryHTML(plan.next, '翌日分', state.zero);
 
@@ -261,6 +290,9 @@
       if (z) z.onchange = function () { state.zero = z.checked; draw(); };
     }
     draw();
+    return {
+      setGift: function (g) { state.gift = g; state.giftState = 'done'; if (state.sec === 'gift') draw(); }
+    };
   }
 
   // ---------- 本日の共有 ----------
@@ -314,5 +346,5 @@
       (more ? '<div class="shurei-more"><span>前の終礼ノート：</span>' + more + '</div>' : '') + '</div>';
   }
 
-  root.PlanView = { render: render, renderShare: renderShare, renderNotes: renderNotes, jpDate: jpDate, relDay: relDay, esc: esc };
+  root.PlanView = { render: render, giftHTML: giftHTML, renderShare: renderShare, renderNotes: renderNotes, jpDate: jpDate, relDay: relDay, esc: esc };
 })(window);

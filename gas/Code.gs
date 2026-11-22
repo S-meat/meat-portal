@@ -31,9 +31,16 @@ function doPost(e) {
     var pin = PropertiesService.getScriptProperties().getProperty('UPLOAD_PIN');
     if (!pin || String(p.pin) !== String(pin)) throw new Error('暗証番号が違います');
     var plan = JSON.parse(p.payload || '');
-    if (!plan || !plan.date || !/^\d{4}-\d{2}-\d{2}$/.test(plan.date)) throw new Error('日付が不正です');
-    savePlan_(plan);
-    result = { ok: true, date: plan.date };
+    if (p.kind === 'gift') {
+      // ギフト予定（バランス照会から抽出したもの）
+      if (!plan || !plan.items || !plan.dates || !plan.dates.length) throw new Error('ギフトのデータが不正です');
+      saveGift_(plan);
+      result = { ok: true, kind: 'gift', date: plan.dates[0].date };
+    } else {
+      if (!plan || !plan.date || !/^\d{4}-\d{2}-\d{2}$/.test(plan.date)) throw new Error('日付が不正です');
+      savePlan_(plan);
+      result = { ok: true, date: plan.date };
+    }
   } catch (err) {
     result = { ok: false, error: String(err && err.message || err) };
   }
@@ -64,6 +71,8 @@ function doGet(e) {
       body = { ok: true, date: d, text: plan ? buildSlackText_(plan) : '' };
     } else if (action === 'share') {
       body = getShare_(p.date || '');
+    } else if (action === 'gift') {
+      body = { ok: true, gift: loadGift_() };
     } else if (action === 'notes') {
       body = { ok: true, notes: listShureiNotes_(Number(p.days || 4)) };
     } else if (action === 'pdf') {
@@ -701,4 +710,47 @@ function testShureiPdf() {
   if (!notes.length) return;
   var r = getPdf_(notes[0].pdfs[0].id);
   Logger.log(notes[0].date + ' ' + notes[0].time + ' PDF取得OK（' + Math.round(r.data.length * 0.75 / 1024) + 'KB）');
+}
+
+// ============================================================
+//  ギフト予定（バランス照会のギフト品目）— 最新の1件だけ保存
+// ============================================================
+var GIFT_SHEET = 'gifts';
+
+function giftSheet_() {
+  var ss = spreadsheet_();
+  var sh = ss.getSheetByName(GIFT_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(GIFT_SHEET);
+    sh.getRange(1, 1, 1, 3).setValues([['取り込み日時', '元ファイル', 'JSON(分割)']]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function saveGift_(gift) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var sh = giftSheet_();
+    var json = JSON.stringify(gift);
+    var row = [new Date(), gift.sourceFile || ''];
+    for (var i = 0; i < json.length; i += CHUNK) row.push(json.substring(i, i + CHUNK));
+    if (sh.getLastRow() >= 2) sh.getRange(2, 1, 1, sh.getLastColumn()).clearContent();
+    sh.getRange(2, 1, 1, row.length).setValues([row]);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function loadGift_() {
+  var sh = giftSheet_();
+  if (sh.getLastRow() < 2) return null;
+  var vals = sh.getRange(2, 1, 1, sh.getLastColumn()).getValues()[0];
+  var json = '';
+  for (var i = 2; i < vals.length; i++) json += (vals[i] || '');
+  if (!json) return null;
+  var gift = JSON.parse(json);
+  gift.updatedAt = vals[0] instanceof Date ? vals[0].toISOString() : String(vals[0]);
+  return gift;
 }

@@ -172,6 +172,16 @@
     document.getElementById('next').disabled = i < 0 || i >= dates.length - 1;
   }
 
+  // ---------- ギフト予定 ----------
+  var giftData = null, giftPromise = null;
+  function loadGift() {
+    if (!CFG.GAS_URL) return Promise.resolve(null);
+    if (!giftPromise) giftPromise = jsonp(CFG.GAS_URL + '?action=gift').then(function (r) {
+      giftData = (r && r.ok) ? r.gift : null; return giftData;
+    }).catch(function () { giftPromise = null; return null; });
+    return giftPromise;
+  }
+
   // ---------- 合言葉 ----------
   function showKey(el, message, retry) {
     el.innerHTML = '<div class="card keycard"><h2><span class="num">KEY</span>合言葉を入力してください</h2>' +
@@ -199,15 +209,18 @@
       current = res.date || '';
       setLabel(res.plan);
       if (!res.plan) {
-        planEl.innerHTML = '<div class="state"><b>作業予定がまだありません</b>作業指示書が取り込まれると、ここに表示されます。</div>';
+        planEl.innerHTML = '<div class="state"><b>作業予定がまだありません</b>作業指示書が取り込まれると、ここに表示されます。</div><div id="giftOnly"></div>';
+        loadGift().then(function (g) { var b = document.getElementById('giftOnly'); if (b && g) b.innerHTML = PlanView.giftHTML(g, 'done'); });
         return;
       }
-      PlanView.render(planEl, res.plan, {
+      var view = PlanView.render(planEl, res.plan, {
         me: store.get('me'),
         section: store.get('section') || 'pack',
+        gift: giftData,
         onMeChange: function (v) { store.set('me', v); },
         onSection: function (v) { store.set('section', v); }
       });
+      if (!giftData) loadGift().then(function (g) { view.setGift(g); });
     }).catch(function (err) {
       planEl.innerHTML = '<div class="state"><b>読み込めませんでした</b>' + PlanView.esc(err.message) +
         '<br><br><button class="btn sub" id="retry">再読み込み</button></div>';

@@ -219,3 +219,20 @@ body.dragging .drop{border-color:var(--ink);background:#fafaf6}
 .force-mobile .seg .short{display:inline}
 .force-mobile #tabs button{font-size:11px;padding:9px 2px}
 .force-mobile .groups{grid-template-columns:1fr}
+
+/* ---------- ギフト予定 ---------- */
+.seg.small button{padding:7px 2px}
+.gift-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
+table.gift{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;table-layout:fixed}
+.gift th,.gift td{border-bottom:1px solid var(--line);padding:7px 1px}
+.gift th{font-size:11px;color:var(--sub);font-weight:600;white-space:nowrap;letter-spacing:-.02em}
+.gift th small{display:block;font-size:10px}
+.gift th.sat{color:#1d4ed8}.gift th.sun{color:#b42318}
+.gift .gn{position:sticky;left:0;background:#fff;text-align:left;width:31%;padding-right:4px;z-index:1;line-height:1.25}
+.gift td.gn b{font-size:13px}
+.gift td.gn span{display:block;font-size:10px;color:var(--sub)}
+.gift .q{text-align:center;font-variant-numeric:tabular-nums}
+.gift td.q b{font-size:14px;letter-spacing:-.03em}
+@media(min-width:600px){.gift td.q b{font-size:17px}.gift th{font-size:13px}.gift .gn{width:24%}}
+.gift .z{color:#c4c4bf}
+.gift tbody tr:nth-child(even) td{background:#fafaf8}

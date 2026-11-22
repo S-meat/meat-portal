@@ -27,6 +27,7 @@
     <div><i>02</i><b>内容を確認</b>下にプレビューが出ます。メンバーが見る画面と同じです。</div>
     <div><i>03</i><b>共有する</b>暗証番号を入れて共有。同じ日付を取り込み直すと上書きされます。</div>
   </div>
+  <p class="muted" style="margin:-4px 0 12px">ギフト予定は、バランス照会のファイルをドロップするか、下の「ギフト予定を貼り付け」に表を貼り付けます。</p>
 
   <div class="card">
     <h2><span class="num">01</span>作業指示書を選ぶ</h2>
@@ -36,6 +37,12 @@
       <input type="file" id="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
     </label>
     <div id="parseMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">GIFT</span>ギフト予定を貼り付け</h2>
+    <p class="muted" style="margin:0 0 8px">バランス照会のExcelで、日付の見出し行から品目の行まで選んでコピーし、ここに貼り付けます。「ｷﾞﾌﾄ」の付く品目だけを読み取ります。</p>
+    <textarea id="giftText" rows="4" placeholder="ここに貼り付け" style="width:100%;box-sizing:border-box;font-size:14px;padding:10px;border:1px solid var(--line);border-radius:10px"></textarea>
   </div>
 
   <div class="card" id="shareCard" hidden>
@@ -59,17 +66,19 @@
 <form id="gasForm" method="post" target="gasFrame" hidden>
   <input type="hidden" name="pin">
   <input type="hidden" name="payload">
+  <input type="hidden" name="kind">
 </form>
 
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="assets/config.js"></script>
 <script src="assets/parser.js"></script>
 <script src="assets/render.js"></script>
+<script src="assets/gift.js"></script>
 <script>
 (function () {
   'use strict';
   var CFG = window.PORTAL_CONFIG || {};
-  var plan = null;
+  var plan = null, gift = null;
   var $ = function (id) { return document.getElementById(id); };
   var esc = PlanView.esc;
   function msg(el, cls, html) { $(el).innerHTML = html ? '<div class="msg ' + cls + '">' + html + '</div>' : ''; }
@@ -121,10 +130,17 @@
     var reader = new FileReader();
     reader.onload = function () {
       try {
-        plan = PlanParser.parseWorkbook(XLSX, new Uint8Array(reader.result), file.name);
+        var data = new Uint8Array(reader.result);
+        var wb = XLSX.read(data, { type: 'array' });
+        if (GiftParser.isGiftWorkbook(wb)) {
+          showGift(GiftParser.fromWorkbook(XLSX, wb, { fileName: file.name }), file.name);
+          return;
+        }
+        gift = null;
+        plan = PlanParser.parseWorkbook(XLSX, data, file.name);
         showPreview(file.name);
       } catch (err) {
-        plan = null;
+        plan = null; gift = null;
         $('shareCard').hidden = true;
         $('preview').innerHTML = '';
         msg('parseMsg', 'err', '読み取れませんでした：' + esc(err.message));
@@ -143,6 +159,31 @@
     PlanView.render($('preview'), plan, {});
   }
 
+  // ---------- ギフト予定 ----------
+  function showGift(g, name) {
+    plan = null; gift = g;
+    msg('parseMsg', 'ok', '<b>' + esc(name) + '</b> からギフト予定を読み取りました');
+    $('summary').innerHTML = 'ギフト予定 <b style="color:var(--ink);font-size:16px">' + g.items.length + '品目</b>（' + esc(g.dates[0].label) + '〜' + esc(g.dates[g.dates.length - 1].label) + '）' +
+      '<br>下と同じ内容が「明日の予定」→「ギフト」に表示されます（明日から7日分。日がたつと自動で先へ進みます）。前回のギフト予定は置き換わります。';
+    $('shareCard').hidden = false;
+    $('preview').innerHTML = PlanView.giftHTML(g, 'done');
+  }
+  var giftTimer = null;
+  $('giftText').addEventListener('input', function () {
+    clearTimeout(giftTimer);
+    giftTimer = setTimeout(function () {
+      var t = $('giftText').value;
+      if (!t.trim()) return;
+      msg('shareMsg', '', '');
+      try {
+        showGift(GiftParser.fromText(t, { fileName: '貼り付け' }), '貼り付けた表');
+      } catch (err) {
+        gift = null; $('shareCard').hidden = true; $('preview').innerHTML = '';
+        msg('parseMsg', 'err', 'ギフト予定を読み取れませんでした：' + esc(err.message) + '<br>日付の見出し行（例：11／22日）も含めてコピーしてください。');
+      }
+    }, 300);
+  });
+
   // ---------- 共有 ----------
   var waiting = null;
   window.addEventListener('message', function (e) {
@@ -159,7 +200,8 @@
     $('share').textContent = 'この内容で共有する';
     if (d.ok) {
       store.set('pin', $('pin').value);
-      msg('shareMsg', 'ok', PlanView.jpDate(d.date) + ' の作業予定を共有しました。<a href="index.html#plan">共有アプリで見る</a>');
+      if (d.kind === 'gift') msg('shareMsg', 'ok', 'ギフト予定を共有しました。<a href="index.html#plan">共有アプリで見る</a>（明日の予定 →「ギフト」）');
+      else msg('shareMsg', 'ok', PlanView.jpDate(d.date) + ' の作業予定を共有しました。<a href="index.html#plan">共有アプリで見る</a>');
     } else {
       msg('shareMsg', 'err', '共有できませんでした：' + esc(d.error || ''));
     }
@@ -178,29 +220,44 @@
     s.src = CFG.GAS_URL + '?action=list&key=' + encodeURIComponent($('pin').value.trim()) + '&callback=' + cb + '&_=' + Date.now();
     document.body.appendChild(s);
   }
+  function verifyGift(startedAt) {
+    var cb = 'mp_g_' + Date.now();
+    var s = document.createElement('script');
+    window[cb] = function (res) {
+      delete window[cb]; s.remove();
+      var g = res && res.gift;
+      var ok = g && new Date(g.updatedAt).getTime() >= startedAt - 60000;
+      finish(ok ? { ok: true, kind: 'gift' } : { ok: false, error: '保存を確認できませんでした。暗証番号を確認してもう一度お試しください。' });
+    };
+    s.onerror = function () { finish({ ok: false, error: '通信エラー' }); };
+    s.src = CFG.GAS_URL + '?action=gift&key=' + encodeURIComponent($('pin').value.trim()) + '&callback=' + cb + '&_=' + Date.now();
+    document.body.appendChild(s);
+  }
 
   $('share').onclick = function () {
-    if (!plan || !CFG.GAS_URL) return;
+    if ((!plan && !gift) || !CFG.GAS_URL) return;
     var pin = $('pin').value.trim();
     if (!pin) { msg('shareMsg', 'err', '暗証番号を入れてください'); return; }
     var f = $('gasForm');
     f.action = CFG.GAS_URL;
     f.pin.value = pin;
-    f.payload.value = JSON.stringify(plan);
+    f.payload.value = JSON.stringify(gift || plan);
+    f.kind.value = gift ? 'gift' : '';
     var startedAt = Date.now();
     $('share').disabled = true;
     $('share').textContent = '送信中…';
     msg('shareMsg', '', '');
-    waiting = { timer: setTimeout(function () { verifyByList(plan.date, startedAt); }, 8000) };
+    var isGift = !!gift, d0 = plan && plan.date;
+    waiting = { timer: setTimeout(function () { if (isGift) verifyGift(startedAt); else verifyByList(d0, startedAt); }, 8000) };
     f.submit();
   };
 
   $('dl').onclick = function () {
-    if (!plan) return;
-    var blob = new Blob([JSON.stringify(plan, null, 1)], { type: 'application/json' });
+    if (!plan && !gift) return;
+    var blob = new Blob([JSON.stringify(gift || plan, null, 1)], { type: 'application/json' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'plan-' + plan.date + '.json';
+    a.download = gift ? 'gift-' + gift.dates[0].date + '.json' : 'plan-' + plan.date + '.json';
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   };
