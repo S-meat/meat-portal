@@ -31,6 +31,7 @@
     <button role="tab" data-tab="shift">シフト変更</button>
     <button role="tab" data-tab="kyuka">希望休</button>
   </nav>
+  <button class="ticker" id="ticker" hidden><span class="ticker-tag">NEW</span><span class="ticker-win"><span class="ticker-txt" id="tickerTxt"></span></span></button>
 </header>
 
 <!-- 明日の作業予定 -->
@@ -171,6 +172,26 @@
     document.getElementById('prev').disabled = i <= 0;
     document.getElementById('next').disabled = i < 0 || i >= dates.length - 1;
   }
+
+  // ---------- お知らせ（流れる文字）：until の日まで表示し、翌日から自動で消える ----------
+  var ANNOUNCE = {
+    text: '1週間のギフト予定が見られるようになりました！「明日の予定」→「ギフト」をタップ',
+    until: '2026-11-29',
+    section: 'gift'
+  };
+  (function () {
+    var t = new Date(), today = t.getFullYear() + '-' + ('0' + (t.getMonth() + 1)).slice(-2) + '-' + ('0' + t.getDate()).slice(-2);
+    if (!ANNOUNCE.text || today > ANNOUNCE.until) return;
+    var el = document.getElementById('ticker');
+    document.getElementById('tickerTxt').textContent = ANNOUNCE.text;
+    el.hidden = false;
+    el.onclick = function () {
+      store.set('section', ANNOUNCE.section);
+      openTab('plan');
+      load(current);
+      window.scrollTo(0, 0);
+    };
+  })();
 
   // ---------- ギフト予定 ----------
   var giftData = null, giftPromise = null;

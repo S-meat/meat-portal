@@ -236,3 +236,12 @@ table.gift{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;t
 @media(min-width:600px){.gift td.q b{font-size:17px}.gift th{font-size:13px}.gift .gn{width:24%}}
 .gift .z{color:#c4c4bf}
 .gift tbody tr:nth-child(even) td{background:#fafaf8}
+
+/* ---------- お知らせ（流れる文字） ---------- */
+.ticker{display:flex;align-items:center;gap:8px;width:100%;margin:8px 0 0;padding:7px 10px;border:1px solid #111;border-radius:10px;background:#fff8d6;color:#111;font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-align:left}
+.ticker[hidden]{display:none}
+.ticker-tag{flex:none;background:#111;color:#fff;border-radius:6px;padding:1px 6px;font-size:11px;letter-spacing:.04em}
+.ticker-win{flex:1;overflow:hidden;white-space:nowrap;position:relative}
+.ticker-txt{display:inline-block;padding-left:100%;animation:ticker 18s linear infinite}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@media (prefers-reduced-motion:reduce){.ticker-txt{animation:none;padding-left:0}}
