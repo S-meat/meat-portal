@@ -11,6 +11,7 @@
  *   VIEW_KEY          … 閲覧用の合言葉（アプリを開くときに入力。未設定なら合言葉なしで開ける）
  *   SHARE_CHANNEL     … 「本日の共有」まとめが投稿されるチャンネル（未設定は #110 = C05G46NECKV）
  *   PDF_CHANNELS      … PDFを表示してよいチャンネルID（カンマ区切り。未設定は #110 終礼ノートのみ）
+ *   SHARE_GROUPS      … 本日の共有に出すチャンネル名の先頭番号（カンマ区切り。未設定は 101 = 報告・連絡のみ）
  *
  * 【デプロイ】ウェブアプリ / 実行ユーザー：自分 / アクセス：全員
  * ※ ES5 で記述（var・for ループのみ）
@@ -378,7 +379,25 @@ function getShare_(date) {
     var list = listShares_();
     if (list.length) { d = list[list.length - 1]; share = loadShare_(d); }
   }
-  return { ok: true, date: d, share: share, dates: listShares_() };
+  return { ok: true, date: d, share: filterShare_(share), dates: listShares_() };
+}
+
+// 本日の共有に出すチャンネルだけに絞る（未設定は #101 報告・連絡のみ）
+function shareGroupPrefixes_() {
+  var v = PropertiesService.getScriptProperties().getProperty('SHARE_GROUPS');
+  return (v || '101').split(/[,\s]+/).filter(function (x) { return x; });
+}
+function filterShare_(share) {
+  if (!share) return share;
+  var prefixes = shareGroupPrefixes_(), groups = [], count = 0;
+  for (var i = 0; i < (share.groups || []).length; i++) {
+    var g = share.groups[i], hit = false;
+    for (var j = 0; j < prefixes.length; j++) if (String(g.channel).indexOf(prefixes[j] + '-') === 0 || g.channel === prefixes[j]) hit = true;
+    if (hit) { groups.push(g); count += g.posts.length; }
+  }
+  share.groups = groups;
+  share.count = count;
+  return share;
 }
 
 /** 毎朝トリガー用（7時台） */
@@ -411,7 +430,7 @@ function buildShare_(date) {
   }
   if (!digest) return null;
 
-  var parsed = parseDigest_(digest.text || '');
+  var parsed = filterShare_(parseDigest_(digest.text || ''));
   for (var g = 0; g < parsed.groups.length; g++) {
     var posts = parsed.groups[g].posts;
     for (var j = 0; j < posts.length; j++) {
@@ -508,12 +527,16 @@ function summarizeText_(raw) {
     if (!line.replace(/[\s　]/g, '')) { flushEntry(); continue; }
     // 決まり文句は省く
     if (/^(特注が入りましたので共有(いた)?します|お疲れ様です|お疲れさまです|よろしくお願い(いた)?します)[。.]?$/.test(line.trim())) continue;
-    var h = line.match(/^[\s　]*【([^】]+)】[\s　]*(.*)$/);
+    // 行頭の【…】（複数可）は見出しに：【連絡】【共有】件名 → 見出し「連絡・共有」＋件名
+    var h = line.match(/^[\s　]*((?:【[^】]+】[\s　]*)+)(.*)$/);
     if (h) {
       flushSec();
-      sec.title = h[1];
+      sec.title = (h[1].match(/【([^】]+)】/g) || []).map(function (x) { return x.replace(/[【】]/g, ''); }).join('・');
       if (h[2]) line = h[2]; else continue;
     }
+    // 行頭の「・」「●」「-」などは外す（画面側で点を付けるため）
+    line = line.replace(/^([\s　]*)[・●○■□◆◇▪︎\-–—＊*]+[\s　]*/, '$1');
+    if (!line.replace(/[\s　]/g, '')) continue;
     var indented = /^[\s　]/.test(line);
     var body = line.replace(/^[\s　]+/, '');
     if (indented && entry) { entry.items.push(body.replace(/[\s　]+/g, ' ')); continue; }

@@ -266,10 +266,10 @@
   // ---------- 本日の共有 ----------
   function renderShare(el, share) {
     var groups = share.groups || [];
-    var html = '<div id="shureiBox"></div><div class="share-intro">Slack「本日の共有」の投稿を、要点だけ読みやすく整理しています。</div>';
-    if (!groups.length) html += '<div class="card"><div class="empty">共有する投稿はありません</div></div>';
+    var html = '<div id="shureiBox"></div><div class="share-intro">Slack #101 報告・連絡の投稿を、要点だけ読みやすく整理しています。</div>';
+    if (!groups.length) html += '<div class="card"><div class="empty">#101 報告・連絡の新しい投稿はありません</div></div>';
     groups.forEach(function (g) {
-      html += '<div class="card share-group"><div class="g-head"><h3>' + esc(g.channel.replace(/^\d+-/, '')) + '</h3><span class="sum">' + g.posts.length + '件</span></div>';
+      html += '<div class="card share-group"><div class="g-head"><h3>' + esc(g.channel.replace(/^\d+-/, '').replace(/_/g, '・')) + '</h3><span class="sum">' + g.posts.length + '件</span></div>';
       g.posts.forEach(function (p, idx) {
         var body = '';
         (p.sections || []).forEach(function (sec) {
