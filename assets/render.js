@@ -236,13 +236,16 @@
     opt = opt || {};
     if (state === 'loading') return '<div class="card"><div class="empty">ギフト予定を読み込み中…</div></div>';
     if (!gift) return '<div class="card"><div class="empty"><b style="font-size:15px;color:var(--ink)">ギフト予定はまだありません</b><br>バランス照会を取り込むと表示されます。</div></div>';
-    var t = new Date(); t.setDate(t.getDate() + 1);
-    var from = ymd(t);
-    var days = opt.all ? gift.dates.slice() : gift.dates.filter(function (d) { return d.date >= from; }).slice(0, 7);
+    // 表示期間：投稿（取り込み）日の2日後から7日分（日がたっても期間は動かない）
     var upd = gift.updatedAt || gift.importedAt;
+    var t = upd ? new Date(upd) : new Date(); t.setDate(t.getDate() + 2);
+    var from = ymd(t); t.setDate(t.getDate() + 6);
+    var to = ymd(t);
+    var days = opt.all ? gift.dates.slice() : gift.dates.filter(function (d) { return d.date >= from && d.date <= to; });
+    var range = days.length ? days[0].label.replace(/\(.\)$/, '') + '〜' + days[days.length - 1].label.replace(/\(.\)$/, '') : '';
     var updText = '';
     if (upd) { var u = new Date(upd); updText = (u.getMonth() + 1) + '/' + u.getDate() + ' ' + u.getHours() + ':' + ('0' + u.getMinutes()).slice(-2) + ' 取り込み'; }
-    if (!days.length) return '<div class="card"><div class="empty">明日以降のギフト予定がありません（' + esc(updText) + '）<br>新しいバランス照会を取り込んでください。</div></div>';
+    if (!days.length) return '<div class="card"><div class="empty">表示できるギフト予定がありません（' + esc(updText) + '）<br>新しいバランス照会を取り込んでください。</div></div>';
     var head = '<tr><th class="gn">品目</th>' + days.map(function (d) {
       var wk = d.label.replace(/^.*\(/, '').replace(')', '');
       return '<th class="q' + (wk === '土' ? ' sat' : wk === '日' ? ' sun' : '') + '">' + esc(d.label.replace(/\(.\)$/, '')) + '<small>' + esc(wk) + '</small></th>';
@@ -253,7 +256,7 @@
         return '<td class="q">' + (v ? '<b>' + n1(v) + '</b>' : '<span class="z">–</span>') + '</td>';
       }).join('') + '</tr>';
     }).join('');
-    return '<div class="card"><div class="toolbar"><h2 style="margin:0"><span class="num">GIFT</span>' + (opt.all ? 'ギフト予定（取り込み内容）' : 'ギフト予定（明日から）') + '</h2><span class="muted">' + esc(updText) + '</span></div>' +
+    return '<div class="card"><div class="toolbar"><h2 style="margin:0"><span class="num">GIFT</span>' + (opt.all ? 'ギフト予定（取り込み内容）' : 'ギフト予定 ' + esc(range)) + '</h2><span class="muted">' + esc(updText) + '</span></div>' +
       '<div class="gift-scroll"><table class="gift"><thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>' +
       '<p class="muted" style="margin:8px 0 0">単位：ヒレ＝本、ロース切身・味噌＝枚、しゃぶ・スライス＝パック</p></div>';
   }

@@ -164,7 +164,7 @@
     plan = null; gift = g;
     msg('parseMsg', 'ok', '<b>' + esc(name) + '</b> からギフト予定を読み取りました');
     $('summary').innerHTML = 'ギフト予定 <b style="color:var(--ink);font-size:16px">' + g.items.length + '品目</b>（' + esc(g.dates[0].label) + '〜' + esc(g.dates[g.dates.length - 1].label) + '）' +
-      '<br>下と同じ内容が「明日の予定」→「ギフト」に表示されます（明日から7日分。日がたつと自動で先へ進みます）。前回のギフト予定は置き換わります。';
+      '<br>下と同じ内容が「明日の予定」→「ギフト」に表示されます（投稿日の2日後から7日分）。前回のギフト予定は置き換わります。';
     $('shareCard').hidden = false;
     $('preview').innerHTML = PlanView.giftHTML(g, 'done');
   }
