@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script src="assets/fit.js"></script>
 <meta name="theme-color" content="#f5f5f2">
-<title>作業指示書の取り込み｜MEAT LINK</title>
+<title>作業指示書・バランス照会の取り込み｜MEAT LINK</title>
 <link rel="icon" type="image/png" href="assets/logo.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
 <link rel="stylesheet" href="assets/style.css">
@@ -14,7 +14,7 @@
 <header class="app-head">
   <div class="brand">
     <img class="logo" src="assets/logo.png" width="584" height="610" alt="SAIBOKU" decoding="async">
-    <div><small>SAIBOKU 製造部</small><b>作業指示書の取り込み</b></div>
+    <div><small>SAIBOKU 製造部</small><b>作業指示書・バランス照会の取り込み</b></div>
     <span class="spacer"></span>
     <a class="pill line" href="manual-admin.html" style="text-decoration:none">マニュアル</a>
     <a class="pill line" href="index.html#plan" style="text-decoration:none">共有アプリへ</a>
@@ -23,24 +23,24 @@
 
 <div class="wrap">
   <div class="rules">
-    <div><i>01</i><b>指示書を選ぶ</b>作業指示書（.xlsx）を選ぶかドラッグ。「内臓作業室」「精肉パック作業室」「当日分まとめ」「翌日分まとめ」を読み取ります。</div>
+    <div><i>01</i><b>ファイルを選ぶ</b>作業指示書とバランス照会（.xlsx）を選ぶかドラッグ。2つ同時でも、どちらか1つでもOKです。</div>
     <div><i>02</i><b>内容を確認</b>下にプレビューが出ます。メンバーが見る画面と同じです。</div>
     <div><i>03</i><b>共有する</b>暗証番号を入れて共有。同じ日付を取り込み直すと上書きされます。</div>
   </div>
-  <p class="muted" style="margin:-4px 0 12px">ギフト予定は、バランス照会のファイルをドロップするか、下の「ギフト予定を貼り付け」に表を貼り付けます。</p>
 
   <div class="card">
-    <h2><span class="num">01</span>作業指示書を選ぶ</h2>
+    <h2><span class="num">01</span>作業指示書・バランス照会を選ぶ</h2>
     <label class="drop" id="drop">
       <b>ここにファイルをドロップ</b>
-      <span class="muted">またはタップして選択（.xlsx / .xlsm）</span>
-      <input type="file" id="file" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <span class="muted">2つまとめてドロップできます／タップして選択（.xlsx / .xlsm）</span>
+      <input type="file" id="file" multiple accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
     </label>
     <div id="parseMsg"></div>
+    <div id="loaded" class="loaded"></div>
   </div>
 
   <div class="card">
-    <h2><span class="num">GIFT</span>ギフト予定を貼り付け</h2>
+    <h2><span class="num">GIFT</span>ギフト予定を貼り付け（ファイルがないとき）</h2>
     <p class="muted" style="margin:0 0 8px">バランス照会のExcelで、日付の見出し行から品目の行まで選んでコピーし、ここに貼り付けます。「ｷﾞﾌﾄ」の付く品目だけを読み取ります。</p>
     <textarea id="giftText" rows="4" placeholder="ここに貼り付け" style="width:100%;box-sizing:border-box;font-size:14px;padding:10px;border:1px solid var(--line);border-radius:10px"></textarea>
   </div>
@@ -59,6 +59,7 @@
   </div>
 
   <div id="preview"></div>
+  <div id="giftPreview"></div>
 </div>
 
 <!-- GAS への送信（hidden form + iframe：CORS 回避） -->
@@ -78,7 +79,7 @@
 (function () {
   'use strict';
   var CFG = window.PORTAL_CONFIG || {};
-  var plan = null, gift = null;
+  var plan = null, gift = null, planName = '', giftName = '';
   var $ = function (id) { return document.getElementById(id); };
   var esc = PlanView.esc;
   function msg(el, cls, html) { $(el).innerHTML = html ? '<div class="msg ' + cls + '">' + html + '</div>' : ''; }
@@ -117,94 +118,134 @@
   window.addEventListener('drop', function (e) {
     if (!hasFiles(e)) return;
     e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging');
-    var f = e.dataTransfer.files && e.dataTransfer.files[0];
-    if (f) handle(f);
+    handleFiles(e.dataTransfer.files);
   });
-  $('file').addEventListener('change', function (e) { if (e.target.files[0]) handle(e.target.files[0]); e.target.value = ''; });
+  $('file').addEventListener('change', function (e) { handleFiles(e.target.files); e.target.value = ''; });
 
-  function handle(file) {
-    msg('parseMsg', '', '');
-    if (!/\.(xlsx|xlsm)$/i.test(file.name)) { msg('parseMsg', 'err', 'Excelファイル（.xlsx / .xlsm）を選んでください：' + esc(file.name)); return; }
-    msg('shareMsg', '', '');
+  // 複数ファイルを順に読む。作業指示書かバランス照会かは中身で自動判定
+  function handleFiles(list) {
+    var files = Array.prototype.slice.call(list || []);
+    if (!files.length) return;
+    msg('parseMsg', '', ''); msg('shareMsg', '', '');
     if (typeof XLSX === 'undefined') { msg('parseMsg', 'err', '読み取りライブラリを読み込めませんでした。ネット接続を確認してください。'); return; }
-    var reader = new FileReader();
-    reader.onload = function () {
-      try {
-        var data = new Uint8Array(reader.result);
-        var wb = XLSX.read(data, { type: 'array' });
-        if (GiftParser.isGiftWorkbook(wb)) {
-          showGift(GiftParser.fromWorkbook(XLSX, wb, { fileName: file.name }), file.name);
-          return;
-        }
-        gift = null;
-        plan = PlanParser.parseWorkbook(XLSX, data, file.name);
-        showPreview(file.name);
-      } catch (err) {
-        plan = null; gift = null;
-        $('shareCard').hidden = true;
-        $('preview').innerHTML = '';
-        msg('parseMsg', 'err', '読み取れませんでした：' + esc(err.message));
+    var errs = [];
+    (function next(i) {
+      if (i >= files.length) {
+        if (errs.length) msg('parseMsg', 'err', errs.join('<br>'));
+        update();
+        return;
       }
-    };
-    reader.readAsArrayBuffer(file);
+      var file = files[i];
+      if (!/\.(xlsx|xlsm)$/i.test(file.name)) { errs.push('Excelファイル（.xlsx / .xlsm）ではありません：' + esc(file.name)); next(i + 1); return; }
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var data = new Uint8Array(reader.result);
+          var wb = XLSX.read(data, { type: 'array' });
+          if (GiftParser.isGiftWorkbook(wb)) { gift = GiftParser.fromWorkbook(XLSX, wb, { fileName: file.name }); giftName = file.name; }
+          else { plan = PlanParser.parseWorkbook(XLSX, data, file.name); planName = file.name; }
+        } catch (err) {
+          errs.push('読み取れませんでした（' + esc(file.name) + '）：' + esc(err.message));
+        }
+        next(i + 1);
+      };
+      reader.onerror = function () { errs.push('開けませんでした：' + esc(file.name)); next(i + 1); };
+      reader.readAsArrayBuffer(file);
+    })(0);
   }
 
-  function showPreview(name) {
-    var n = plan.naizo, p = plan.pack;
-    msg('parseMsg', 'ok', '<b>' + esc(name) + '</b> を読み取りました');
-    $('summary').innerHTML = '作業日 <b style="color:var(--ink);font-size:16px">' + PlanView.jpDate(plan.date) + '</b>' +
-      '　内臓 ' + n.staff.length + '名・商品 ' + n.products.length + '件　精肉パック ' + p.staff.length + '名' +
-      '　当日分 ' + plan.today.total + '　翌日分 ' + plan.next.total;
-    $('shareCard').hidden = false;
-    PlanView.render($('preview'), plan, {});
+  // 読み込み状況・まとめ・プレビューを描き直す
+  function update() {
+    var rows = [];
+    rows.push('<div class="ld' + (plan ? ' on' : '') + '"><b>作業指示書</b><span>' + (plan ? esc(planName) + '（' + PlanView.jpDate(plan.date) + '）' : '未選択') + '</span>' + (plan ? '<button data-clear="plan" aria-label="外す">×</button>' : '') + '</div>');
+    rows.push('<div class="ld' + (gift ? ' on' : '') + '"><b>バランス照会</b><span>' + (gift ? esc(giftName) + '（' + gift.items.length + '品目）' : '未選択') + '</span>' + (gift ? '<button data-clear="gift" aria-label="外す">×</button>' : '') + '</div>');
+    $('loaded').innerHTML = rows.join('');
+    [].forEach.call($('loaded').querySelectorAll('[data-clear]'), function (b) {
+      b.onclick = function () { if (b.getAttribute('data-clear') === 'plan') plan = null; else gift = null; msg('shareMsg', '', ''); update(); };
+    });
+    var sum = [];
+    if (plan) {
+      var n = plan.naizo, p = plan.pack;
+      sum.push('作業日 <b style="color:var(--ink);font-size:16px">' + PlanView.jpDate(plan.date) + '</b>' +
+        '　内臓 ' + n.staff.length + '名・商品 ' + n.products.length + '件　精肉パック ' + p.staff.length + '名' +
+        '　当日分 ' + plan.today.total + '　翌日分 ' + plan.next.total);
+    }
+    if (gift) {
+      sum.push('ギフト予定 <b style="color:var(--ink);font-size:16px">' + gift.items.length + '品目</b>（投稿日の2日後から7日分を表示。前回のギフト予定は置き換わります）');
+    }
+    $('summary').innerHTML = sum.join('<br>');
+    $('shareCard').hidden = !(plan || gift);
+    $('share').textContent = shareLabel();
+    if (plan) PlanView.render($('preview'), plan, {}); else $('preview').innerHTML = '';
+    $('giftPreview').innerHTML = gift ? PlanView.giftHTML(gift, 'done') : '';
+  }
+  function shareLabel() {
+    return plan && gift ? '作業指示書とギフト予定をまとめて共有する' : gift ? 'ギフト予定を共有する' : 'この内容で共有する';
   }
 
-  // ---------- ギフト予定 ----------
-  function showGift(g, name) {
-    plan = null; gift = g;
-    msg('parseMsg', 'ok', '<b>' + esc(name) + '</b> からギフト予定を読み取りました');
-    $('summary').innerHTML = 'ギフト予定 <b style="color:var(--ink);font-size:16px">' + g.items.length + '品目</b>（' + esc(g.dates[0].label) + '〜' + esc(g.dates[g.dates.length - 1].label) + '）' +
-      '<br>下と同じ内容が「明日の予定」→「ギフト」に表示されます（投稿日の2日後から7日分）。前回のギフト予定は置き換わります。';
-    $('shareCard').hidden = false;
-    $('preview').innerHTML = PlanView.giftHTML(g, 'done');
-  }
   var giftTimer = null;
   $('giftText').addEventListener('input', function () {
     clearTimeout(giftTimer);
     giftTimer = setTimeout(function () {
       var t = $('giftText').value;
       if (!t.trim()) return;
-      msg('shareMsg', '', '');
+      msg('shareMsg', '', ''); msg('parseMsg', '', '');
       try {
-        showGift(GiftParser.fromText(t, { fileName: '貼り付け' }), '貼り付けた表');
+        gift = GiftParser.fromText(t, { fileName: '貼り付け' }); giftName = '貼り付けた表';
       } catch (err) {
-        gift = null; $('shareCard').hidden = true; $('preview').innerHTML = '';
+        gift = null;
         msg('parseMsg', 'err', 'ギフト予定を読み取れませんでした：' + esc(err.message) + '<br>日付の見出し行（例：11／22日）も含めてコピーしてください。');
       }
+      update();
     }, 300);
   });
 
   // ---------- 共有 ----------
-  var waiting = null;
+  // 作業指示書・ギフト予定を1件ずつ順番に送る（同じ iframe を使うため）
+  var waiting = null, queue = [], results = [];
   window.addEventListener('message', function (e) {
     var d = e.data && e.data.meatPortal;
     if (!d || !waiting) return;
     finish(d);
   });
 
+  function sendNext() {
+    var job = queue.shift();
+    if (!job) { done(); return; }
+    var f = $('gasForm');
+    f.action = CFG.GAS_URL;
+    f.pin.value = $('pin').value.trim();
+    f.payload.value = JSON.stringify(job.data);
+    f.kind.value = job.kind === 'gift' ? 'gift' : '';
+    var startedAt = Date.now();
+    waiting = { job: job, timer: setTimeout(function () { if (job.kind === 'gift') verifyGift(startedAt); else verifyByList(job.data.date, startedAt); }, 8000) };
+    f.submit();
+  }
+
   function finish(d) {
     if (!waiting) return;
     clearTimeout(waiting.timer);
+    var job = waiting.job;
     waiting = null;
+    results.push({ job: job, res: d });
+    if (!d.ok) queue = [];   // 暗証番号違いなどは残りも同じ結果になるので止める
+    // 2件目は1件目の画面遷移が落ち着いてから送る
+    setTimeout(sendNext, d.ok ? 600 : 0);
+  }
+
+  function done() {
     $('share').disabled = false;
-    $('share').textContent = 'この内容で共有する';
-    if (d.ok) {
-      store.set('pin', $('pin').value);
-      if (d.kind === 'gift') msg('shareMsg', 'ok', 'ギフト予定を共有しました。<a href="index.html#plan">共有アプリで見る</a>（明日の予定 →「ギフト」）');
-      else msg('shareMsg', 'ok', PlanView.jpDate(d.date) + ' の作業予定を共有しました。<a href="index.html#plan">共有アプリで見る</a>');
-    } else {
-      msg('shareMsg', 'err', '共有できませんでした：' + esc(d.error || ''));
-    }
+    $('share').textContent = shareLabel();
+    var ok = [], ng = [];
+    results.forEach(function (r) {
+      var what = r.job.kind === 'gift' ? 'ギフト予定' : PlanView.jpDate(r.job.data.date) + ' の作業予定';
+      if (r.res.ok) ok.push(what); else ng.push(what + '：' + esc(r.res.error || ''));
+    });
+    if (ok.length) store.set('pin', $('pin').value);
+    var html = '';
+    if (ok.length) html += '<div class="msg ok">' + ok.join('と') + 'を共有しました。<a href="index.html#plan">共有アプリで見る</a>' + (results.some(function (r) { return r.res.ok && r.job.kind === 'gift'; }) ? '（ギフトは 明日の予定 →「ギフト」）' : '') + '</div>';
+    if (ng.length) html += '<div class="msg err">共有できませんでした：' + ng.join('<br>') + '</div>';
+    $('shareMsg').innerHTML = html;
   }
 
   // postMessage が届かない環境向け：一覧に日付が入ったかで確認
@@ -235,29 +276,23 @@
   }
 
   $('share').onclick = function () {
-    if ((!plan && !gift) || !CFG.GAS_URL) return;
-    var pin = $('pin').value.trim();
-    if (!pin) { msg('shareMsg', 'err', '暗証番号を入れてください'); return; }
-    var f = $('gasForm');
-    f.action = CFG.GAS_URL;
-    f.pin.value = pin;
-    f.payload.value = JSON.stringify(gift || plan);
-    f.kind.value = gift ? 'gift' : '';
-    var startedAt = Date.now();
+    if ((!plan && !gift) || !CFG.GAS_URL || waiting) return;
+    if (!$('pin').value.trim()) { msg('shareMsg', 'err', '暗証番号を入れてください'); return; }
+    queue = []; results = [];
+    if (plan) queue.push({ kind: 'plan', data: plan });
+    if (gift) queue.push({ kind: 'gift', data: gift });
     $('share').disabled = true;
     $('share').textContent = '送信中…';
     msg('shareMsg', '', '');
-    var isGift = !!gift, d0 = plan && plan.date;
-    waiting = { timer: setTimeout(function () { if (isGift) verifyGift(startedAt); else verifyByList(d0, startedAt); }, 8000) };
-    f.submit();
+    sendNext();
   };
 
   $('dl').onclick = function () {
     if (!plan && !gift) return;
-    var blob = new Blob([JSON.stringify(gift || plan, null, 1)], { type: 'application/json' });
+    var blob = new Blob([JSON.stringify(plan && gift ? { plan: plan, gift: gift } : (gift || plan), null, 1)], { type: 'application/json' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = gift ? 'gift-' + gift.dates[0].date + '.json' : 'plan-' + plan.date + '.json';
+    a.download = plan && gift ? 'plan-gift-' + plan.date + '.json' : gift ? 'gift-' + gift.dates[0].date + '.json' : 'plan-' + plan.date + '.json';
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   };
