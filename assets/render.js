@@ -246,9 +246,12 @@
     var updText = '';
     if (upd) { var u = new Date(upd); updText = (u.getMonth() + 1) + '/' + u.getDate() + ' ' + u.getHours() + ':' + ('0' + u.getMinutes()).slice(-2) + ' 取り込み'; }
     if (!days.length) return '<div class="card"><div class="empty">表示できるギフト予定がありません（' + esc(updText) + '）<br>新しいバランス照会を取り込んでください。</div></div>';
-    var head = '<tr><th class="gn">品目</th>' + days.map(function (d) {
+    var head = '<tr><th class="gn">品目</th>' + days.map(function (d, i) {
       var wk = d.label.replace(/^.*\(/, '').replace(')', '');
-      return '<th class="q' + (wk === '土' ? ' sat' : wk === '日' ? ' sun' : '') + '">' + esc(d.label.replace(/\(.\)$/, '')) + '<small>' + esc(wk) + '</small></th>';
+      var md = d.label.replace(/\(.\)$/, ''), day = md.split('/')[1];
+      // 狭い画面でも重ならないよう、月は最初の列と月が変わる列だけに付ける
+      var txt = (i === 0 || day === '1') ? md : day;
+      return '<th class="q' + (wk === '土' ? ' sat' : wk === '日' ? ' sun' : '') + '">' + esc(txt) + '<small>' + esc(wk) + '</small></th>';
     }).join('') + '</tr>';
     var rows = gift.items.map(function (it) {
       return '<tr><td class="gn"><b>' + esc(it.name) + '</b>' + (it.unit ? '<span>' + esc(it.unit === 'P' ? 'パック' : it.unit) + '</span>' : '') + '</td>' + days.map(function (d) {
