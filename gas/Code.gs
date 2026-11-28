@@ -770,12 +770,12 @@ function loadGift_() {
 // ============================================================
 //  取り込み時の更新通知（#110）
 // ============================================================
-function postUpdateNotice_(items) {
+function postUpdateNotice_(items, giftBase) {
   var props = PropertiesService.getScriptProperties();
   if (props.getProperty('UPDATE_NOTIFY') === '0') return;
   var token = props.getProperty('SLACK_BOT_TOKEN');
   if (!token) return;
-  var text = buildUpdateNotice_(items);
+  var text = buildUpdateNotice_(items, giftBase);
   if (!text) return;
   var url = props.getProperty('APP_URL');
   if (url) text += '\n<' + url + '|:iphone: MEAT LINK で見る>';
@@ -793,7 +793,7 @@ function postUpdateNotice_(items) {
   Logger.log(res.getContentText());
 }
 
-function buildUpdateNotice_(items) {
+function buildUpdateNotice_(items, giftBase) {
   var plan = null, gift = false;
   for (var i = 0; i < items.length; i++) {
     if (items[i] && items[i].kind === 'gift') gift = true;
@@ -803,7 +803,8 @@ function buildUpdateNotice_(items) {
   if (plan) parts.push(mdDate_(plan) + '分の作業指示書');
   if (gift) {
     // ギフト予定の表示期間：取り込んだ日の2日後から7日分（共有アプリと同じ）
-    var from = addDays_(new Date(), 2), to = addDays_(new Date(), 8);
+    var base = giftBase || new Date();
+    var from = addDays_(base, 2), to = addDays_(base, 8);
     parts.push('ギフトスケジュール（' + (from.getMonth() + 1) + '/' + from.getDate() + '〜' + (to.getMonth() + 1) + '/' + to.getDate() + '）');
   }
   if (!parts.length) return '';
@@ -819,4 +820,21 @@ function mdDate_(ymd) {
 /** エディタで実行して文面を確認する（Slackには投稿しない） */
 function testUpdateNotice() {
   Logger.log(buildUpdateNotice_([{ kind: 'plan', date: dateStr_(addDays_(new Date(), 1)) }, { kind: 'gift' }]));
+}
+
+/**
+ * 直近に取り込んだ作業指示書とギフト予定の更新通知を手動で #110 に投稿する
+ * （通知機能を入れる前に取り込んだ分の通知や、投稿テスト用）
+ */
+function postLatestUpdateNotice() {
+  var list = listPlans_(), latest = null;
+  for (var i = 0; i < list.length; i++) {
+    if (!latest || list[i].updatedAt > latest.updatedAt) latest = list[i];
+  }
+  var gift = loadGift_();
+  var items = [];
+  if (latest) items.push({ kind: 'plan', date: latest.date });
+  if (gift) items.push({ kind: 'gift' });
+  Logger.log(buildUpdateNotice_(items, gift ? new Date(gift.updatedAt) : null));
+  postUpdateNotice_(items, gift ? new Date(gift.updatedAt) : null);
 }
