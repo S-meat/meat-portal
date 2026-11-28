@@ -68,6 +68,7 @@
   <input type="hidden" name="pin">
   <input type="hidden" name="payload">
   <input type="hidden" name="kind">
+  <input type="hidden" name="notify">
 </form>
 
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -217,6 +218,10 @@
     f.pin.value = $('pin').value.trim();
     f.payload.value = JSON.stringify(job.data);
     f.kind.value = job.kind === 'gift' ? 'gift' : '';
+    // #110 への更新通知は最後の1件で、先に保存できた分とまとめて1回だけ送る
+    f.notify.value = queue.length ? '0' : JSON.stringify(results.filter(function (r) { return r.res.ok; }).map(function (r) {
+      return r.job.kind === 'gift' ? { kind: 'gift' } : { kind: 'plan', date: r.job.data.date };
+    }));
     var startedAt = Date.now();
     waiting = { job: job, timer: setTimeout(function () { if (job.kind === 'gift') verifyGift(startedAt); else verifyByList(job.data.date, startedAt); }, 8000) };
     f.submit();

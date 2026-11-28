@@ -7,6 +7,7 @@
  *   SLACK_BOT_TOKEN   … 既存の Slack Bot トークン（xoxb-…）
  *   SLACK_CHANNEL     … 投稿先チャンネルID（#110 = C05G46NECKV）
  *   APP_URL           … 共有アプリのURL（Slack投稿のリンク用）
+ *   UPDATE_NOTIFY     … 取り込み時の更新通知を止めるときだけ 0 にする（未設定＝通知する）
  *   SLACK_DAY_OFFSET  … 6:50の投稿で何日後の予定を出すか（0=当日 / 1=翌日、未設定は0）
  *   VIEW_KEY          … 閲覧用の合言葉（アプリを開くときに入力。未設定なら合言葉なしで開ける）
  *   SHARE_CHANNEL     … 「本日の共有」まとめが投稿されるチャンネル（未設定は #110 = C05G46NECKV）
@@ -43,6 +44,17 @@ function doPost(e) {
     }
   } catch (err) {
     result = { ok: false, error: String(err && err.message || err) };
+  }
+  // 保存できたら #110 に更新通知（まとめて共有したときは最後の1件でまとめて1回だけ）
+  if (result.ok && p.notify && p.notify !== '0') {
+    try {
+      var items = JSON.parse(p.notify);
+      if (Object.prototype.toString.call(items) !== '[object Array]') items = [];
+      items.push(p.kind === 'gift' ? { kind: 'gift' } : { kind: 'plan', date: result.date });
+      postUpdateNotice_(items);
+    } catch (err2) {
+      Logger.log('更新通知に失敗：' + err2);
+    }
   }
   // 親ページ（抽出アプリ）へ結果を通知
   var html = '<script>try{window.top.postMessage(' + JSON.stringify({ meatPortal: result }) +
@@ -753,4 +765,58 @@ function loadGift_() {
   var gift = JSON.parse(json);
   gift.updatedAt = vals[0] instanceof Date ? vals[0].toISOString() : String(vals[0]);
   return gift;
+}
+
+// ============================================================
+//  取り込み時の更新通知（#110）
+// ============================================================
+function postUpdateNotice_(items) {
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty('UPDATE_NOTIFY') === '0') return;
+  var token = props.getProperty('SLACK_BOT_TOKEN');
+  if (!token) return;
+  var text = buildUpdateNotice_(items);
+  if (!text) return;
+  var url = props.getProperty('APP_URL');
+  if (url) text += '\n<' + url + '|:iphone: MEAT LINK で見る>';
+  var res = UrlFetchApp.fetch('https://slack.com/api/chat.postMessage', {
+    method: 'post',
+    contentType: 'application/json; charset=utf-8',
+    headers: { Authorization: 'Bearer ' + token },
+    payload: JSON.stringify({
+      channel: props.getProperty('SLACK_CHANNEL') || 'C05G46NECKV',
+      text: text,
+      unfurl_links: false
+    }),
+    muteHttpExceptions: true
+  });
+  Logger.log(res.getContentText());
+}
+
+function buildUpdateNotice_(items) {
+  var plan = null, gift = false;
+  for (var i = 0; i < items.length; i++) {
+    if (items[i] && items[i].kind === 'gift') gift = true;
+    else if (items[i] && items[i].kind === 'plan' && /^\d{4}-\d{2}-\d{2}$/.test(items[i].date)) plan = items[i].date;
+  }
+  var parts = [];
+  if (plan) parts.push(mdDate_(plan) + '分の作業指示書');
+  if (gift) {
+    // ギフト予定の表示期間：取り込んだ日の2日後から7日分（共有アプリと同じ）
+    var from = addDays_(new Date(), 2), to = addDays_(new Date(), 8);
+    parts.push('ギフトスケジュール（' + (from.getMonth() + 1) + '/' + from.getDate() + '〜' + (to.getMonth() + 1) + '/' + to.getDate() + '）');
+  }
+  if (!parts.length) return '';
+  return ':bell: ' + parts.join('、') + 'が更新されました！';
+}
+
+function mdDate_(ymd) {
+  var a = ymd.split('-');
+  var d = new Date(Number(a[0]), Number(a[1]) - 1, Number(a[2]));
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日(' + WEEK[d.getDay()] + ')';
+}
+
+/** エディタで実行して文面を確認する（Slackには投稿しない） */
+function testUpdateNotice() {
+  Logger.log(buildUpdateNotice_([{ kind: 'plan', date: dateStr_(addDays_(new Date(), 1)) }, { kind: 'gift' }]));
 }
